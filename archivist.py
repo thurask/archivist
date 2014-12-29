@@ -122,7 +122,7 @@ else:
     
 #Q10/Q5
 try:
-    radio_q10 = str(glob.glob("*8960*wtr*.signed")[0])
+    radio_q10 = str(glob.glob("*8960*wtr.*.signed")[0])
 except IndexError:
     print("No Q10/Q5 radio found\n")
 else:

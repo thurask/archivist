@@ -134,8 +134,8 @@ for file in os.listdir(localdir):
 #Compress loaders with 7za.exe
 def compress():
     for file in os.listdir(localdir):
-         if file.endswith(".exe"):
-              os.system("7za.exe a -mx9 -mmt8 -m0=lzma2:d128m:fb128" + '"' + file + '.7z" "' + file + '"')
+        if file.endswith(".exe"):
+            os.system("7za.exe a -mx9 -mmt8 -m0=lzma2:d128m:fb128 " + '"' + file + '.7z" "' + file + '"')
 
 def purge7z():
     os.remove("7za.7z")

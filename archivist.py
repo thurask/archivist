@@ -24,8 +24,9 @@ radioversion = input("RADIO VERSION: ")
 extracted = input("EXTRACT BAR FILES? Y/N: ")
 received = input("COMPRESS LOADERS? Y/N: ")
 
-#Get OS type, set 7z type
-if platform.machine().endswith("64") == True: 
+#Get OS type, set 7z 
+amd64 = platform.machine().endswith("64")
+if amd64 == True: 
     sevenzip = "7za64.exe"
 else:
     sevenzip = "7za.exe"
@@ -43,7 +44,10 @@ def extract():
 def compress():
     for file in os.listdir(localdir):
         if file.endswith(".exe") and file.startswith(("Q10", "Z10", "Z30", "Z3", "Passport")):
-            os.system(sevenzip + " a -mx9 -mmt8 -m0=lzma2:d128m:fb128 " + '"' + os.path.splitext(os.path.basename(file))[0]   + '.7z" "' + file + '"')
+            if amd64 == True:
+                os.system(sevenzip + " a -mx9 -mmt8 -m0=lzma2:d128m:fb128 " + '"' + os.path.splitext(os.path.basename(file))[0]   + '.7z" "' + file + '"')
+            else:
+                os.system(sevenzip + " a -mx9 -mmt8 " + '"' + os.path.splitext(os.path.basename(file))[0]   + '.7z" "' + file + '"')
 
 #Extract bars (if chosen)
 if extracted == "yes" or extracted == "y" or extracted == "Y":

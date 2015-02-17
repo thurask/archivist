@@ -45,11 +45,12 @@ def extract():
 ##WARNING: Requires a lot of RAM.
 def compress():
     #Get corecount, with fallback
-    cores = os.cpu_count() #thank you Python 3.4
-    if cores == None:
-        cores = 1
+    cores = str(os.cpu_count()) #thank you Python 3.4
+    if os.cpu_count() == None:
+        cores = str(1)
     for file in os.listdir(localdir):
         if file.endswith(".exe") and file.startswith(("Q10", "Z10", "Z30", "Z3", "Passport")):
+            print("\nCOMPRESSING: " + os.path.splitext(os.path.basename(file))[0] + ".exe @mmt" + cores)
             if amd64 == True:
                 os.system(sevenzip + " a -mx9 -mmt" + cores + " -m0=lzma2:d128m:fb128 " + '"' + os.path.splitext(os.path.basename(file))[0]   + '.7z" "' + file + '"')
             else:

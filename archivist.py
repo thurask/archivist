@@ -5,6 +5,7 @@
 # 7za.exe                    #
 # 7za64.exe                  #
 # cap.exe                    #
+# Windows                    #
 #                            #
 # Instructions:              #
 # Read the CMD prompt :p     #
@@ -22,6 +23,7 @@ print("!!!!EXTRACT THIS TO BAR FILE FOLDER!!!!\n")
 osversion = input("OS VERSION: ")
 radioversion = input("RADIO VERSION: ")
 extracted = input("EXTRACT BAR FILES? Y/N: ")
+radios = input("CREATE RADIO LOADERS? Y/N: ")
 received = input("COMPRESS LOADERS? Y/N: ")
 
 #Get OS type, set 7z 
@@ -42,12 +44,16 @@ def extract():
 #Compress loaders with 7z
 ##WARNING: Requires a lot of RAM.
 def compress():
+    #Get corecount, with fallback
+    cores = os.cpu_count() #thank you Python 3.4
+    if cores == None:
+        cores = 1
     for file in os.listdir(localdir):
         if file.endswith(".exe") and file.startswith(("Q10", "Z10", "Z30", "Z3", "Passport")):
             if amd64 == True:
-                os.system(sevenzip + " a -mx9 -mmt8 -m0=lzma2:d128m:fb128 " + '"' + os.path.splitext(os.path.basename(file))[0]   + '.7z" "' + file + '"')
+                os.system(sevenzip + " a -mx9 -mmt" + cores + " -m0=lzma2:d128m:fb128 " + '"' + os.path.splitext(os.path.basename(file))[0]   + '.7z" "' + file + '"')
             else:
-                os.system(sevenzip + " a -mx9 -mmt8 " + '"' + os.path.splitext(os.path.basename(file))[0]   + '.7z" "' + file + '"')
+                os.system(sevenzip + " a -mx9 -mmt" + cores + " " + '"' + os.path.splitext(os.path.basename(file))[0]   + '.7z" "' + file + '"')
 
 #Extract bars (if chosen)
 if extracted == "yes" or extracted == "y" or extracted == "Y":
@@ -106,11 +112,12 @@ else:
         os.system("cap.exe create " + os_ti + " " + radio_z10_ti + " Z10_" + osversion + "_STL100-1.exe")
     except Exception:
         print("Could not create STL100-1 OS/radio loader\n")
-    print("Creating OMAP Z10 radio...\n")
-    try:
-        os.system("cap.exe create " + radio_z10_ti + " Z10_" + radioversion + "_STL100-1.exe")
-    except Exception:
-        print("Could not create STL100-1 radio loader\n")
+    if radios == "yes" or radios == "y" or radios == "Y":
+        print("Creating OMAP Z10 radio...\n")
+        try:
+            os.system("cap.exe create " + radio_z10_ti + " Z10_" + radioversion + "_STL100-1.exe")
+        except Exception:
+            print("Could not create STL100-1 radio loader\n")
     
 #STL100-X
 try:
@@ -122,12 +129,13 @@ else:
     try:
         os.system("cap.exe create " + os_8960 + " " + radio_z10_qcm + " Z10_" + osversion + "_STL100-2-3.exe")
     except Exception:
-        print("Could not create Qualcomm Z10 OS/radio loader\n")    
-    print("Creating Qualcomm Z10 radio...\n")
-    try:
-        os.system("cap.exe create " + radio_z10_qcm + " Z10_" + radioversion + "_STL100-2-3.exe")
-    except Exception:
-        print("Could not create Qualcomm Z10 radio loader\n")
+        print("Could not create Qualcomm Z10 OS/radio loader\n")
+    if radios == "yes" or radios == "y" or radios == "Y":
+        print("Creating Qualcomm Z10 radio...\n")
+        try:
+            os.system("cap.exe create " + radio_z10_qcm + " Z10_" + radioversion + "_STL100-2-3.exe")
+        except Exception:
+            print("Could not create Qualcomm Z10 radio loader\n")
     
 #STL100-4
 try:
@@ -139,12 +147,13 @@ else:
     try:
         os.system("cap.exe create " + os_8960 + " " + radio_z10_vzw + " Z10_" + osversion + "_STL100-4.exe")
     except Exception:
-        print("Could not create Verizon Z10 OS/radio loader\n")    
-    print("Creating Verizon Z10 radio...\n")
-    try:
-        os.system("cap.exe create " + radio_z10_vzw + " Z10_" + radioversion + "_STL100-4.exe")
-    except Exception:
-        print("Could not create Verizon Z10 radio loader\n")
+        print("Could not create Verizon Z10 OS/radio loader\n")
+    if radios == "yes" or radios == "y" or radios == "Y":
+        print("Creating Verizon Z10 radio...\n")
+        try:
+            os.system("cap.exe create " + radio_z10_vzw + " Z10_" + radioversion + "_STL100-4.exe")
+        except Exception:
+            print("Could not create Verizon Z10 radio loader\n")
     
 #Q10/Q5
 try:
@@ -157,11 +166,12 @@ else:
         os.system("cap.exe create " + os_8960 + " " + radio_q10 + " Q10_" + osversion + "_SQN100-1-2-3-4-5.exe")
     except Exception:
         print("Could not create Q10/Q5 OS/radio loader\n")
-    print("Creating Q10/Q5 radio...\n")
-    try:
-        os.system("cap.exe create " + radio_q10 + " Q10_" + radioversion + "_SQN100-1-2-3-4-5.exe")
-    except Exception:
-        print("Could not create Q10/Q5 radio loader\n")
+    if radios == "yes" or radios == "y" or radios == "Y":
+        print("Creating Q10/Q5 radio...\n")
+        try:
+            os.system("cap.exe create " + radio_q10 + " Q10_" + radioversion + "_SQN100-1-2-3-4-5.exe")
+        except Exception:
+            print("Could not create Q10/Q5 radio loader\n")
 
 #Z30/Classic
 try:
@@ -174,11 +184,12 @@ else:
         os.system("cap.exe create " + os_8960 + " " + radio_z30 + " Z30_" + osversion + "_STA100-1-2-3-4-5-6.exe")
     except Exception:
         print("Could not create Z30/Classic OS/radio loader\n")
-    print("Creating Z30/Classic radio...\n")
-    try:
-        os.system("cap.exe create " + radio_z30 + " Z30_" + radioversion + "_STA100-1-2-3-4-5-6.exe")
-    except Exception:
-        print("Could not create Z30/Classic radio loader\n")
+    if radios == "yes" or radios == "y" or radios == "Y":
+        print("Creating Z30/Classic radio...\n")
+        try:
+            os.system("cap.exe create " + radio_z30 + " Z30_" + radioversion + "_STA100-1-2-3-4-5-6.exe")
+        except Exception:
+            print("Could not create Z30/Classic radio loader\n")
     
 #Z3
 try:
@@ -191,11 +202,12 @@ else:
         os.system("cap.exe create " + os_8960 + " " + radio_z3 + " Z3_" + osversion + "_STJ100-1-2.exe")
     except Exception:
         print("Could not create Z3 OS/radio loader\n")
-    print("Creating Z3 radio...\n")
-    try:
-        os.system("cap.exe create " + radio_z3 + " Z3_" + radioversion + "_STJ100-1-2.exe")
-    except Exception:
-        print("Could not create Z3 radio loader\n")
+    if radios == "yes" or radios == "y" or radios == "Y":
+        print("Creating Z3 radio...\n")
+        try:
+            os.system("cap.exe create " + radio_z3 + " Z3_" + radioversion + "_STJ100-1-2.exe")
+        except Exception:
+            print("Could not create Z3 radio loader\n")
     
 #Passport
 try:
@@ -210,11 +222,12 @@ else:
         os.system("cap.exe create " + os_8974 + " " + radio_8974 + " Passport_" + osversion + "_SQW100-1-2-3.exe")
     except Exception:
         print("Could not create Passport OS/radio loader\n")
-    print("Creating Passport radio...\n")
-    try:
-        os.system("cap.exe create " + radio_8974 + " Passport_" + radioversion + "_SQW100-1-2-3.exe")
-    except Exception:
-        print("Could not create Passport radio loader\n")
+    if radios == "yes" or radios == "y" or radios == "Y":
+        print("Creating Passport radio...\n")
+        try:
+            os.system("cap.exe create " + radio_8974 + " Passport_" + radioversion + "_SQW100-1-2-3.exe")
+        except Exception:
+            print("Could not create Passport radio loader\n")
     
 #Remove .signed files only if extracted from bars
 if extracted == "yes" or extracted == "y" or extracted == "Y":

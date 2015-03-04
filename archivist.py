@@ -17,6 +17,7 @@ import os
 import glob
 import shutil
 import platform
+import hashlib
 
 localdir = os.getcwd()
 print("!!!!EXTRACT THIS TO BAR FILE FOLDER!!!!\n")
@@ -25,10 +26,15 @@ radioversion = input("RADIO VERSION: ")
 extracted = input("EXTRACT BAR FILES? Y/N: ")
 radios = input("CREATE RADIO LOADERS? Y/N: ")
 received = input("COMPRESS LOADERS? Y/N: ")
+if received == "yes" or received == "y" or received == "Y":
+    deleted = input("DELETE UNCOMPRESSED? Y/N: ")
+else:
+    deleted = "n"
+hashed = input("GENERATE HASHES? Y/N: ")
 
-#Get OS type, set 7z 
+#Get OS type, set 7z
 amd64 = platform.machine().endswith("64")
-if amd64 == True: 
+if amd64 == True:
     sevenzip = "7za64.exe"
 else:
     sevenzip = "7za.exe"
@@ -55,6 +61,38 @@ def compress():
                 os.system(sevenzip + " a -mx9 -mmt" + cores + " -m0=lzma2:d128m:fb128 " + '"' + os.path.splitext(os.path.basename(file))[0]   + '.7z" "' + file + '"')
             else:
                 os.system(sevenzip + " a -mx9 -mmt" + cores + " " + '"' + os.path.splitext(os.path.basename(file))[0]   + '.7z" "' + file + '"')
+
+def verify(workingdir, blocksize=16*1024*1024):
+    def shahash(filepath):
+        sha1 = hashlib.sha1()
+        f = open(filepath, 'rb')
+        try:
+            while True:
+                data = f.read(blocksize)
+                if not data:
+                    break
+                sha1.update(data) #read in 16MB chunks, not whole autoloader
+        finally:
+            f.close()
+        return sha1.hexdigest()
+
+    hashoutput = ""
+
+    for file in os.listdir(workingdir):
+        if os.path.isdir(os.path.join(workingdir, file)):
+            pass #exclude folders
+        elif file.endswith(".cksum") and file.startswith("sha1"):
+            pass #exclude already generated files
+        else:
+            result = shahash(os.path.join(workingdir, file))
+            hashoutput+=str(result)
+            hashoutput+=" "
+            hashoutput+=str(file)
+            hashoutput+=" \n"
+
+    target = open(os.path.join(workingdir, 'sha1.cksum'), 'w')
+    target.write(hashoutput)
+    target.close()
 
 #Extract bars (if chosen)
 if extracted == "yes" or extracted == "y" or extracted == "Y":
@@ -119,7 +157,7 @@ else:
             os.system("cap.exe create " + radio_z10_ti + " Z10_" + radioversion + "_STL100-1.exe")
         except Exception:
             print("Could not create STL100-1 radio loader\n")
-    
+
 #STL100-X
 try:
     radio_z10_qcm = str(glob.glob("*radio.qc8960.BB*.signed")[0])
@@ -137,7 +175,7 @@ else:
             os.system("cap.exe create " + radio_z10_qcm + " Z10_" + radioversion + "_STL100-2-3.exe")
         except Exception:
             print("Could not create Qualcomm Z10 radio loader\n")
-    
+
 #STL100-4
 try:
     radio_z10_vzw = str(glob.glob("*radio.qc8960*omadm*.signed")[0])
@@ -155,7 +193,7 @@ else:
             os.system("cap.exe create " + radio_z10_vzw + " Z10_" + radioversion + "_STL100-4.exe")
         except Exception:
             print("Could not create Verizon Z10 radio loader\n")
-    
+
 #Q10/Q5
 try:
     radio_q10 = str(glob.glob("*8960*wtr.*.signed")[0])
@@ -191,7 +229,7 @@ else:
             os.system("cap.exe create " + radio_z30 + " Z30_" + radioversion + "_STA100-1-2-3-4-5-6.exe")
         except Exception:
             print("Could not create Z30/Classic radio loader\n")
-    
+
 #Z3
 try:
     radio_z3 = str(glob.glob("*8930*wtr5*.signed")[0])
@@ -209,7 +247,7 @@ else:
             os.system("cap.exe create " + radio_z3 + " Z3_" + radioversion + "_STJ100-1-2.exe")
         except Exception:
             print("Could not create Z3 radio loader\n")
-    
+
 #Passport
 try:
     radio_8974 = str(glob.glob("*8974*wtr2*.signed")[0])
@@ -229,7 +267,7 @@ else:
             os.system("cap.exe create " + radio_8974 + " Passport_" + radioversion + "_SQW100-1-2-3.exe")
         except Exception:
             print("Could not create Passport radio loader\n")
-    
+
 #Remove .signed files only if extracted from bars
 if extracted == "yes" or extracted == "y" or extracted == "Y":
     print("REMOVING .signed FILES...\n")
@@ -260,6 +298,19 @@ for files in os.listdir(localdir):
         if files.endswith(".7z"):
             print("MOVING: " + files)
             shutil.move(files, zipdir)
-            
+
+#Get SHA-1 hashes (if specified)
+if hashed == "yes" or hashed == "y" or hashed == "Y":
+    print("\nHASHING LOADERS...")
+    if received == "yes" or received == "y" or received == "Y":
+        verify(zipdir, 16*1024*1024)
+    else:
+        verify(loaderdir, 16*1024*1024)
+
+#Remove uncompressed loaders (if specified)
+if deleted == "yes" or deleted == "y" or deleted == "Y":
+    print("\nDELETING UNCOMPRESSED LOADERS...")
+    shutil.rmtree(loaderdir)
+
 print("\nFINISHED!\n")
 smeg = input("Press Enter to exit")

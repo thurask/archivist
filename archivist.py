@@ -364,7 +364,7 @@ if hashed == "yes" or hashed == "y" or hashed == "Y":
     if received == "yes" or received == "y" or received == "Y":
         verify(zipdir_os, 16*1024*1024) #16MB chunks
         verify(zipdir_radio, 16*1024*1024)
-    else:
+    if deleted == "no" or deleted == "n" or deleted == "N":
         verify(loaderdir_os, 16*1024*1024)
         verify(loaderdir_radio, 16*1024*1024)
 

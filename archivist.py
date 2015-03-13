@@ -340,20 +340,20 @@ print("\nMOVING...\n")
 for files in os.listdir(localdir):
     if files.endswith(".bar"):
         print("MOVING: " + files)
-        if os.path.getsize(file) > 90000000: #even the fattest radio is less than 90MB
+        if os.path.getsize(files) > 90000000: #even the fattest radio is less than 90MB
             shutil.move(files, bardir_os)
         else:
             shutil.move(files, bardir_radio)
     if files.endswith(".exe") and files.startswith(("Q10", "Z10", "Z30", "Z3", "Passport")):
         print("MOVING: " + files)
-        if os.path.getsize(file) > 90000000:
+        if os.path.getsize(files) > 90000000:
             shutil.move(files, loaderdir_os)
         else:
             shutil.move(files, loaderdir_radio)
     if received == "yes" or received == "y" or received == "Y":
         if files.endswith(".7z"):
             print("MOVING: " + files)
-            if os.path.getsize(file) > 90000000:
+            if os.path.getsize(files) > 90000000:
                 shutil.move(files, zipdir_os)
             else:
                 shutil.move(files, zipdir_radio)

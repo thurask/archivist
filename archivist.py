@@ -75,24 +75,46 @@ def verify(workingdir, blocksize=16*1024*1024):
         finally:
             f.close()
         return sha1.hexdigest()
-
-    hashoutput = ""
+    
+    def md5hash(filepath):
+        md5 = hashlib.md5()
+        f = open(filepath, 'rb')
+        try:
+            while True:
+                data = f.read(blocksize)
+                if not data:
+                    break
+                md5.update(data) #read in 16MB chunks, not whole autoloader
+        finally:
+            f.close()
+        return md5.hexdigest()
+    
+    hashoutput_s = ""
+    hashoutput_m = ""
 
     for file in os.listdir(workingdir):
         if os.path.isdir(os.path.join(workingdir, file)):
             pass #exclude folders
-        elif file.endswith(".cksum") and file.startswith("sha1"):
+        elif file.endswith(".cksum"):
             pass #exclude already generated files
         else:
-            result = shahash(os.path.join(workingdir, file))
-            hashoutput+=str(result)
-            hashoutput+=" "
-            hashoutput+=str(file)
-            hashoutput+=" \n"
+            result_s = shahash(os.path.join(workingdir, file))
+            hashoutput_s+=str(result_s)
+            hashoutput_s+=" "
+            hashoutput_s+=str(file)
+            hashoutput_s+=" \n"
+            result_m = md5hash(os.path.join(workingdir, file))
+            hashoutput_m+=str(result_m)
+            hashoutput_m+=" "
+            hashoutput_m+=str(file)
+            hashoutput_m+=" \n"
 
-    target = open(os.path.join(workingdir, 'sha1.cksum'), 'w')
-    target.write(hashoutput)
-    target.close()
+    target_s = open(os.path.join(workingdir, 'sha1.cksum'), 'w')
+    target_s.write(hashoutput_s)
+    target_s.close()
+    target_m = open(os.path.join(workingdir, 'md5.cksum'), 'w')
+    target_m.write(hashoutput_m)
+    target_m.close()
 
 #Extract bars (if chosen)
 if extracted == "yes" or extracted == "y" or extracted == "Y":
@@ -104,15 +126,33 @@ else:
 if not os.path.exists(os.path.join(localdir, 'bars')):
     os.mkdir(os.path.join(localdir, 'bars'))
 bardir = os.path.join(localdir, 'bars')
+if not os.path.exists(os.path.join(bardir, osversion)):
+    os.mkdir(os.path.join(bardir, osversion))
+bardir_os = os.path.join(bardir, osversion)
+if not os.path.exists(os.path.join(bardir, radioversion)):
+    os.mkdir(os.path.join(bardir, radioversion))
+bardir_radio = os.path.join(bardir, radioversion)
 
 if not os.path.exists(os.path.join(localdir, 'loaders')):
     os.mkdir(os.path.join(localdir, 'loaders'))
 loaderdir = os.path.join(localdir, 'loaders')
+if not os.path.exists(os.path.join(loaderdir, osversion)):
+    os.mkdir(os.path.join(loaderdir, osversion))
+loaderdir_os = os.path.join(loaderdir, osversion)
+if not os.path.exists(os.path.join(loaderdir, radioversion)):
+    os.mkdir(os.path.join(loaderdir, radioversion))
+loaderdir_radio = os.path.join(loaderdir, radioversion)
 
 if received == "yes" or received == "y" or received == "Y":
     if not os.path.exists(os.path.join(localdir, 'zipped')):
         os.mkdir(os.path.join(localdir, 'zipped'))
     zipdir = os.path.join(localdir, 'zipped')
+    if not os.path.exists(os.path.join(zipdir, osversion)):
+        os.mkdir(os.path.join(zipdir, osversion))
+    zipdir_os = os.path.join(zipdir, osversion)
+    if not os.path.exists(os.path.join(zipdir, radioversion)):
+        os.mkdir(os.path.join(zipdir, radioversion))
+    zipdir_radio = os.path.join(zipdir, radioversion)
 
 ##OS Images
 #8960
@@ -300,22 +340,33 @@ print("\nMOVING...\n")
 for files in os.listdir(localdir):
     if files.endswith(".bar"):
         print("MOVING: " + files)
-        shutil.move(files, bardir)
+        if os.path.getsize(file) > 90000000: #even the fattest radio is less than 90MB
+            shutil.move(files, bardir_os)
+        else:
+            shutil.move(files, bardir_radio)
     if files.endswith(".exe") and files.startswith(("Q10", "Z10", "Z30", "Z3", "Passport")):
         print("MOVING: " + files)
-        shutil.move(files, loaderdir)
+        if os.path.getsize(file) > 90000000:
+            shutil.move(files, loaderdir_os)
+        else:
+            shutil.move(files, loaderdir_radio)
     if received == "yes" or received == "y" or received == "Y":
         if files.endswith(".7z"):
             print("MOVING: " + files)
-            shutil.move(files, zipdir)
+            if os.path.getsize(file) > 90000000:
+                shutil.move(files, zipdir_os)
+            else:
+                shutil.move(files, zipdir_radio)
 
 #Get SHA-1 hashes (if specified)
 if hashed == "yes" or hashed == "y" or hashed == "Y":
     print("\nHASHING LOADERS...")
     if received == "yes" or received == "y" or received == "Y":
-        verify(zipdir, 16*1024*1024)
+        verify(zipdir_os, 16*1024*1024) #16MB chunks
+        verify(zipdir_radio, 16*1024*1024)
     else:
-        verify(loaderdir, 16*1024*1024)
+        verify(loaderdir_os, 16*1024*1024)
+        verify(loaderdir_radio, 16*1024*1024)
 
 #Remove uncompressed loaders (if specified)
 if deleted == "yes" or deleted == "y" or deleted == "Y":

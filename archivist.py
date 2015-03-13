@@ -120,6 +120,12 @@ try:
     os_8960 = str(glob.glob("*qc8960*_sfi.desktop*.signed")[0])
 except IndexError:
     print("\nNo 8960 image found\n")
+    
+#8x30 (10.3.1 MR+)
+try:
+    os_8x30 = str(glob.glob("*qc8x30*desktop*.signed")[0])
+except IndexError:
+    print("\nNo 8x30 image found\n")
 
 #8974
 try:
@@ -127,17 +133,15 @@ try:
 except IndexError:
     print("No 8974 image found\n")
 
-#OMAP
+#OMAP (incl. 10.3.1)
 try:
     os_ti = str(glob.glob("qcfm.image.com.qnx.coreos.qcfm.os.factory_sfi.desktop.*.signed")[0])
 except IndexError:
     print("No OMAP image found, trying 10.3.1 name\n")
-
-#Winchester (10.3.1+)
-try:
-    os_ti = str(glob.glob("*winchester*.signed")[0])
-except IndexError:
-    print("No OMAP image found\n")
+    try:
+        os_ti = str(glob.glob("*winchester*.signed")[0])
+    except IndexError:
+        print("No OMAP image found\n")
 
 ##Radios + Autoloaders
 #STL100-1
@@ -229,8 +233,10 @@ else:
             os.system("cap.exe create " + radio_z30 + " Z30_" + radioversion + "_STA100-1-2-3-4-5-6.exe")
         except Exception:
             print("Could not create Z30/Classic radio loader\n")
+            
 
-#Z3
+
+#Z3 (more damn hybrids)
 try:
     radio_z3 = str(glob.glob("*8930*wtr5*.signed")[0])
 except IndexError:
@@ -238,9 +244,13 @@ except IndexError:
 else:
     print("Creating Z3 OS...\n")
     try:
-        os.system("cap.exe create " + os_8960 + " " + radio_z3 + " Z3_" + osversion + "_STJ100-1-2.exe")
+        os.system("cap.exe create " + os_8x30 + " " + radio_z3 + " Z3_" + osversion + "_STJ100-1-2.exe")
     except Exception:
-        print("Could not create Z3 OS/radio loader\n")
+        print("Could not create Z3 OS/radio loader (8x30)\n")
+        try:
+            os.system("cap.exe create " + os_8960 + " " + radio_z3 + " Z3_" + osversion + "_STJ100-1-2.exe")
+        except Exception:
+            print("Could not create Z3 OS/radio loader (8960)\n")
     if radios == "yes" or radios == "y" or radios == "Y":
         print("Creating Z3 radio...\n")
         try:

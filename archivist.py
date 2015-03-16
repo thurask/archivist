@@ -18,31 +18,8 @@ import glob
 import shutil
 import platform
 import hashlib
-import sys
-
-class TeeNoFile(object):
-        def __init__(self, name, mode):
-            self.file = open(name, mode)
-            self.stdout = sys.stdout
-            sys.stdout = self
-        def close(self):
-            if self.stdout is not None:
-                sys.stdout = self.stdout
-                self.stdout = None
-            if self.file is not None:
-                self.file.close()
-                self.file = None
-        def write(self, data):
-            self.file.write(data)
-            self.stdout.write(data)
-        def flush(self):
-            self.file.flush()
-            self.stdout.flush()
-        def __del__(self):
-            self.close()
 
 def doMagic():
-    tee=TeeNoFile('archivist.log', 'w')
     localdir = os.getcwd()
     print("!!!!EXTRACT THIS TO BAR FILE FOLDER!!!!\n")
     osversion = input("OS VERSION: ")
@@ -398,7 +375,6 @@ def doMagic():
         shutil.rmtree(loaderdir)
 
     print("\nFINISHED!\n")
-    tee.close()
 
 if __name__ == '__main__':
     doMagic()

@@ -41,7 +41,6 @@ class TeeNoFile(object):
         def __del__(self):
             self.close()
 
-
 def doMagic():
     tee=TeeNoFile('archivist.log', 'w')
     localdir = os.getcwd()
@@ -65,7 +64,7 @@ def doMagic():
         sevenzip = "7za.exe"
 
     #Extract bars with 7z
-    def extract(localdir):
+    def extract():
         print("EXTRACTING...")
         for file in os.listdir(localdir):
             if file.endswith(".bar"):

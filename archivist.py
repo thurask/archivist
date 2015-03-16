@@ -18,8 +18,32 @@ import glob
 import shutil
 import platform
 import hashlib
+import sys
+
+class TeeNoFile(object):
+        def __init__(self, name, mode):
+            self.file = open(name, mode)
+            self.stdout = sys.stdout
+            sys.stdout = self
+        def close(self):
+            if self.stdout is not None:
+                sys.stdout = self.stdout
+                self.stdout = None
+            if self.file is not None:
+                self.file.close()
+                self.file = None
+        def write(self, data):
+            self.file.write(data)
+            self.stdout.write(data)
+        def flush(self):
+            self.file.flush()
+            self.stdout.flush()
+        def __del__(self):
+            self.close()
+
 
 def doMagic():
+    tee=TeeNoFile('archivist.log', 'w')
     localdir = os.getcwd()
     print("!!!!EXTRACT THIS TO BAR FILE FOLDER!!!!\n")
     osversion = input("OS VERSION: ")
@@ -41,7 +65,7 @@ def doMagic():
         sevenzip = "7za.exe"
 
     #Extract bars with 7z
-    def extract():
+    def extract(localdir):
         print("EXTRACTING...")
         for file in os.listdir(localdir):
             if file.endswith(".bar"):
@@ -166,7 +190,7 @@ def doMagic():
     try:
         os_8x30 = str(glob.glob("*qc8x30*desktop*.signed")[0])
     except IndexError:
-        print("\nNo 8x30 image found\n")
+        print("No 8x30 image found\n")
 
     #8974
     try:
@@ -375,6 +399,7 @@ def doMagic():
         shutil.rmtree(loaderdir)
 
     print("\nFINISHED!\n")
+    tee.close()
 
 if __name__ == '__main__':
     doMagic()

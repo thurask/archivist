@@ -62,6 +62,7 @@ class Downloader(threading.Thread):
 			f.close()
 		else:
 			print("* Thread: " + self.name + " Bad URL: " + url)
+			return
 
 # Spawns dowloader threads and manages URL downloads queue
 class DownloadManager():
@@ -115,8 +116,13 @@ def extractBar(filepath):
 	print("EXTRACTING...")
 	for file in os.listdir(filepath):
 		if file.endswith(".bar"):
-			print("\nEXTRACTING: " + file + "\n")
-			os.system(getSevenZip() + " x " + '"' + file + '" *.signed -aos')
+			try:
+				print("\nEXTRACTING: " + file + "\n")
+				os.system(getSevenZip() + " x " + '"' + file + '" *.signed -aos')
+			except Exception:
+				print("EXTRACTION FAILURE")
+				print("DID IT DOWNLOAD PROPERLY?")
+				return
 	
 # Compress loaders with 7z
 # #WARNING: Requires a lot of RAM.

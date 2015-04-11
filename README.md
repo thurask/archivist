@@ -29,45 +29,45 @@ Those listed in Operation, plus (preferably) conversion to executable formats vi
 ## Command Line Arguments
 ### Help
 > archivist.exe -h
-usage: archivist.exe OSVERSION RADIOVERSION SWVERSION [options]
+    usage: archivist.exe OSVERSION RADIOVERSION SWVERSION [options]
 
-Download bar files, create autoloaders.
+    Download bar files, create autoloaders.
 
-positional arguments:
+    positional arguments:
 
-    os                  OS version, 10.x.y.zzzz
+        os                  OS version, 10.x.y.zzzz
+      
+        radio               Radio version, 10.x.y.zzzz
+      
+        swrelease           Software version, 10.x.y.zzzz
   
-    radio               Radio version, 10.x.y.zzzz
-  
-    swrelease           Software version, 10.x.y.zzzz
-  
-optional arguments:
+    optional arguments:
 
-    -h, --help          show this help message and exit
-  
-    --no-radio-loaders  Don't make radio loaders
-  
-    --no-compress       Don't compress loaders
-  
-    --no-delete-uncomp  Don't delete uncompressed loaders
-    
-    --no-verify         Don't verify created loaders
-    
-    --crc32             Enable CRC32 verification
-    
-    --adler32           Enable Adler32 verification
-    
-    --sha224            Enable SHA-224 verification
-    
-    --sha384            Enable SHA-384 verification
-    
-    --sha512            Enable SHA-512 verification
-    
-    --no-sha1           Disable SHA-1 verification
-    
-    --no-sha256         Disable SHA-256 verification
-    
-    --no-md5            Disable MD5 verification
+        -h, --help          show this help message and exit
+      
+        --no-radio-loaders  Don't make radio loaders
+      
+        --no-compress       Don't compress loaders
+      
+        --no-delete-uncomp  Don't delete uncompressed loaders
+        
+        --no-verify         Don't verify created loaders
+        
+        --crc32             Enable CRC32 verification
+        
+        --adler32           Enable Adler32 verification
+        
+        --sha224            Enable SHA-224 verification
+        
+        --sha384            Enable SHA-384 verification
+        
+        --sha512            Enable SHA-512 verification
+        
+        --no-sha1           Disable SHA-1 verification
+        
+        --no-sha256         Disable SHA-256 verification
+        
+        --no-md5            Disable MD5 verification
     
 ### Example
   

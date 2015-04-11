@@ -144,14 +144,16 @@ def availability(url):
 # Hash/verification functions; perform operation on specific file
 # CRC32
 def crc32hash(filepath):
-	buf = open(filepath, 'rb').read()
-	buf = (zlib.crc32(buf) & 0xFFFFFFFF)
-	return "%08X" % buf
+	prev = 0
+	for line in open(filepath, 'rb'):
+		prev = zlib.crc32(line, prev)
+	return "%X"%(prev & 0xFFFFFFFF)
 # Adler32
 def adler32hash(filepath):
-	buf = open(filepath, 'rb').read()
-	buf = (zlib.adler32(buf) & 0xFFFFFFFF)
-	return "%08X" % buf
+	prev = 0
+	for line in open(filepath, 'rb'):
+		prev = zlib.adler32(line, prev)
+	return "%X"%(prev & 0xFFFFFFFF)
 
 # SHA-1
 def sha1hash(filepath, blocksize=16 * 1024 * 1024):
@@ -334,21 +336,21 @@ def verify(workingdir, blocksize=16 * 1024 * 1024, crc32=False, adler32=False, s
 				hashoutput_md5 += " \n"
 	target = open(os.path.join(workingdir, 'all.cksum'), 'w')
 	if crc32 == True:
-		target.write(hashoutput_crc32)
+		target.write(hashoutput_crc32 + "\n")
 	if adler32 == True:
-		target.write(hashoutput_adler32)
+		target.write(hashoutput_adler32 + "\n")
 	if sha1 == True:
-		target.write(hashoutput_sha1)
+		target.write(hashoutput_sha1 + "\n")
 	if sha224 == True:
-		target.write(hashoutput_sha224)
+		target.write(hashoutput_sha224 + "\n")
 	if sha256 == True:
-		target.write(hashoutput_sha256)
+		target.write(hashoutput_sha256 + "\n")
 	if sha384 == True:
-		target.write(hashoutput_sha384)
+		target.write(hashoutput_sha384 + "\n")
 	if sha512 == True:
-		target.write(hashoutput_sha512)
+		target.write(hashoutput_sha512 + "\n")
 	if md5 == True:
-		target.write(hashoutput_md5)
+		target.write(hashoutput_md5 + "\n")
 	target.close()
 		
 def generateLoaders(osversion, radioversion, radios):

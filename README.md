@@ -26,29 +26,51 @@ Those listed in Operation, plus (preferably) conversion to executable formats vi
 8. Delete uncompressed loaders (optional)
 9. Verify loaders (optional)
 
-## Command Line Help
+## Command Line Arguments
+### Help
 C:\Python34\Scripts\dist> archivist.exe -h
 usage: archivist.exe OSVERSION RADIOVERSION SWVERSION [options]
 
 Download bar files, create autoloaders.
 
 positional arguments:
-  os                  OS version, 10.x.y.zzzz
-  radio               Radio version, 10.x.y.zzzz
-  swrelease           Software version, 10.x.y.zzzz
 
+    os                  OS version, 10.x.y.zzzz
+  
+    radio               Radio version, 10.x.y.zzzz
+  
+    swrelease           Software version, 10.x.y.zzzz
+  
 optional arguments:
-  -h, --help          show this help message and exit
-  --folder            Directory to use; default = local
-  --no-radio-loaders  Don't make radio loaders
-  --no-compress       Don't compress loaders
-  --no-delete-uncomp  Don't delete uncompressed loaders
-  --no-verify         Don't verify created loaders
-  --crc32             Enable CRC32 verification
-  --adler32           Enable Adler32 verification
-  --sha224            Enable SHA-224 verification
-  --sha384            Enable SHA-384 verification
-  --sha512            Enable SHA-512 verification
-  --no-sha1           Disable SHA-1 verification
-  --no-sha256         Disable SHA-256 verification
-  --no-md5            Disable MD5 verification
+
+    -h, --help          show this help message and exit
+  
+    --no-radio-loaders  Don't make radio loaders
+  
+    --no-compress       Don't compress loaders
+  
+    --no-delete-uncomp  Don't delete uncompressed loaders
+    
+    --no-verify         Don't verify created loaders
+    
+    --crc32             Enable CRC32 verification
+    
+    --adler32           Enable Adler32 verification
+    
+    --sha224            Enable SHA-224 verification
+    
+    --sha384            Enable SHA-384 verification
+    
+    --sha512            Enable SHA-512 verification
+    
+    --no-sha1           Disable SHA-1 verification
+    
+    --no-sha256         Disable SHA-256 verification
+    
+    --no-md5            Disable MD5 verification
+    
+  ### Example
+  
+    C:\Python34\Scripts\dist> archivist.exe 10.3.1.2726 10.3.1.2727 10.3.1.1877 --no-radio-loaders --sha512 --no-md5
+  
+  would make OS-only autoloaders for 10.3.1.2726/10.3.1.2727, compress them, delete uncompressed loaders and verify with SHA-1, SHA-256, SHA-512.

@@ -28,7 +28,9 @@ Those listed in Operation, plus (preferably) conversion to executable formats vi
 
 ## Command Line Arguments
 ### Help
-> archivist.exe -h
+
+    > archivist.exe -h
+
     usage: archivist.exe OSVERSION RADIOVERSION SWVERSION [options]
 
     Download bar files, create autoloaders.

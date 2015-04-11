@@ -24,6 +24,7 @@ import sys
 import argparse
 import wget
 import urllib.parse
+import urllib.error
 from wget import bar_adaptive
 
 #Handle bools
@@ -85,7 +86,10 @@ def availability(url):
 def download(url):
     basename = (urllib.parse.urlsplit(url).path).split("/")[-1]
     print(basename)
-    filename = wget.download(url, bar=bar_adaptive)
+    try:
+        filename = wget.download(url, bar=bar_adaptive)
+    except urllib.error.HTTPError as e:
+        print(str(e))
         
 #Hash/verification functions; perform operation on specific file
 #CRC32

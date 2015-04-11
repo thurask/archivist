@@ -571,10 +571,10 @@ def doMagic(osversion, radioversion, softwareversion, localdir, radios="y", rece
         print("\nHASHING LOADERS...")
         if received == True:
             verify(zipdir_os, 16 * 1024 * 1024, False, False, True, False, True, False, False, True)  # 16MB chunks
-            verify(zipdir_radio, 16 * 1024 * 1024)
+            verify(zipdir_radio, 16 * 1024 * 1024, False, False, True, False, True, False, False, True)
         if deleted == False:
-            verify(loaderdir_os, 16 * 1024 * 1024)
-            verify(loaderdir_radio, 16 * 1024 * 1024)
+            verify(loaderdir_os, 16 * 1024 * 1024, False, False, True, False, True, False, False, True)
+            verify(loaderdir_radio, 16 * 1024 * 1024, False, False, True, False, True, False, False, True)
 
     # Remove uncompressed loaders (if specified)
     if deleted == True:

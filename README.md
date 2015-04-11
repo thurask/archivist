@@ -28,7 +28,7 @@ Those listed in Operation, plus (preferably) conversion to executable formats vi
 
 ## Command Line Arguments
 ### Help
-C:\Python34\Scripts\dist> archivist.exe -h
+> archivist.exe -h
 usage: archivist.exe OSVERSION RADIOVERSION SWVERSION [options]
 
 Download bar files, create autoloaders.
@@ -69,8 +69,8 @@ optional arguments:
     
     --no-md5            Disable MD5 verification
     
-  ### Example
+### Example
   
-    C:\Python34\Scripts\dist> archivist.exe 10.3.1.2726 10.3.1.2727 10.3.1.1877 --no-radio-loaders --sha512 --no-md5
+    > archivist.exe 10.3.1.2726 10.3.1.2727 10.3.1.1877 --no-radio-loaders --sha512 --no-md5
   
   would make OS-only autoloaders for 10.3.1.2726/10.3.1.2727, compress them, delete uncompressed loaders and verify with SHA-1, SHA-256, SHA-512.

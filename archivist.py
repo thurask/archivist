@@ -547,10 +547,12 @@ def doMagic(osversion, radioversion, softwareversion, localdir, radios=True, rec
 		baseurl + "/qc8930.wtr5-" + radioversion + "-nto+armle-v7+signed.bar",
 		baseurl + "/qc8974.wtr2-" + radioversion + "-nto+armle-v7+signed.bar"]
 
-	download_dict = {}
-	urllist = list(osurls+radiourls)
-	for i in urllist:
-		download_dict[str(i)] = i
+	osdict = {}
+	radiodict = {}
+	for i in osurls:
+		osdict[str(i)] = i
+	for i in radiourls:
+		radiodict[str(i)] = i
 		
 	# Check availability of software release
 	av = availability(baseurl)
@@ -596,7 +598,9 @@ def doMagic(osversion, radioversion, softwareversion, localdir, radios=True, rec
 		os.mkdir(os.path.join(zipdir, radioversion))
 	zipdir_radio = os.path.join(zipdir, radioversion)
 	
-	download_manager = DownloadManager(download_dict, localdir, 5)
+	download_manager = DownloadManager(radiodict, localdir, 5)
+	download_manager.begin_downloads()
+	download_manager.download_dict = osdict
 	download_manager.begin_downloads()
 		
 	extractBar(localdir)

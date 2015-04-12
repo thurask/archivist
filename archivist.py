@@ -1,39 +1,57 @@
 ##############################
-# ARCHIVIST.PY			     #
-#							 #
-# Requirements:			     #
+# ARCHIVIST.PY				 #
+# 							 #
+# Requirements:				 #
 # 7za.exe					 #
-# 7za64.exe				     #
+# 7za64.exe					 #
 # cap.exe					 #
 # Windows					 #
-#							 #
-# Instructions:			     #
+# 							 #
+# Instructions:				 #
 # Read the CMD prompt :p	 #
-#							 #
-# - Thurask				     #
+# 							 #
+# - Thurask					 #
 ##############################
 
-import os
-import glob
-import shutil
-import platform
-import hashlib
-import requests
-import zlib
-import sys
-import argparse
-import time
-import queue
-import threading
-import binascii
-import math
+import os  # filesystem read
+import glob  # string matching for files
+import shutil  # directory read/write
+import platform  # bit type
+import hashlib  # SHA-x, MD5
+import requests  # downloading
+from requests.packages import urllib3  # disable SSL warnings
+import zlib  # CRC32, Adler32
+import sys  # arguments
+import argparse  # argument parsing
+import time  # time for downloader
+import queue  # downloader multithreading
+import threading  # downloader multithreading
+import binascii  # downloader thread naming
+import math  # rounding of floats
+import webbrowser  # invoke browser if update is there
+import subprocess # invocation of 7z, cap
 
-#http://pipe-devnull.com/2012/09/13/queued-threaded-http-downloader-in-python.html
-#Modified to work with Python 3:
-#Downloader class - reads queue and downloads each file in succession
+def updateCheck(version):
+	update = False
+	updatesite = "https://raw.githubusercontent.com/thurask/thurask.github.io/master/archivist.version"
+	print("LOCAL VERSION:", version)
+	urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)  #silence warnings about no SSL
+	get = requests.get(updatesite, verify=False)  # don't use SSL until I figure it out
+	remote = str(get.text).strip()
+	print("REMOTE VERSION:", remote)
+	if (get.status_code != 404):
+		if version != remote:
+				update = True
+		else:
+			update = False
+	return update
+
+# http://pipe-devnull.com/2012/09/13/queued-threaded-http-downloader-in-python.html
+# Modified to work with Python 3:
+# Downloader class - reads queue and downloads each file in succession
 class Downloader(threading.Thread):
 	def __init__(self, queue, output_directory):
-		threading.Thread.__init__(self,name= binascii.hexlify(os.urandom(8)))
+		threading.Thread.__init__(self, name=binascii.hexlify(os.urandom(8)))
 		self.queue = queue
 		self.output_directory = output_directory
 	def run(self):
@@ -49,15 +67,15 @@ class Downloader(threading.Thread):
 		local_filename = url.split('/')[-1]
 		print("Downloading:", local_filename)
 		r = requests.get(url, stream=True)
-		if (r.status_code != 404): #200 OK
+		if (r.status_code != 404):  # 200 OK
 			fname = self.output_directory + "/" + os.path.basename(url)
 			with open(fname, "wb") as f:
 				for chunk in r.iter_content(chunk_size=1024): 
-					if chunk: # filter out keep-alive new chunks
+					if chunk:  # filter out keep-alive new chunks
 						f.write(chunk)
 						f.flush()
 			t_elapsed = time.clock() - t_start
-			t_elapsed_proper = math.ceil(t_elapsed*100)/100
+			t_elapsed_proper = math.ceil(t_elapsed * 100) / 100
 			print("Downloaded " + url + " in " + str(t_elapsed_proper) + " seconds")
 			f.close()
 		else:
@@ -118,7 +136,7 @@ def extractBar(filepath):
 		if file.endswith(".bar"):
 			try:
 				print("\nEXTRACTING: " + file + "\n")
-				os.system(getSevenZip() + " x " + '"' + file + '" *.signed -aos')
+				subprocess.Popen(getSevenZip() + " x " + '"' + file + '" *.signed -aos')
 			except Exception:
 				print("EXTRACTION FAILURE")
 				print("DID IT DOWNLOAD PROPERLY?")
@@ -129,11 +147,11 @@ def extractBar(filepath):
 def compress(filepath):
 	for file in os.listdir(filepath):
 		if file.endswith(".exe") and file.startswith(("Q10", "Z10", "Z30", "Z3", "Passport")):
-			print("\nCOMPRESSING: " + os.path.splitext(os.path.basename(file))[0] + ".exe @mmt" + getCoreCount())
+			print("COMPRESSING: " + os.path.splitext(os.path.basename(file))[0] + ".exe @mmt" + getCoreCount())
 			if is64Bit() == True:
-				os.system(getSevenZip() + " a -mx9 -m0=lzma2 -mmt" + getCoreCount() + " " + '"' + os.path.splitext(os.path.basename(file))[0] + '.7z" "' + file + '"') #ultra compression
+				subprocess.Popen(getSevenZip() + " a -mx9 -m0=lzma2 -mmt" + getCoreCount() + " " + '"' + os.path.splitext(os.path.basename(file))[0] + '.7z" "' + file + '"')  # ultra compression
 			else:
-				os.system(getSevenZip() + " a -mx5 -m0=lzma2 -mmt" + getCoreCount() + " " + '"' + os.path.splitext(os.path.basename(file))[0] + '.7z" "' + file + '"') #normal compression
+				subprocess.Popen(getSevenZip() + " a -mx5 -m0=lzma2 -mmt" + getCoreCount() + " " + '"' + os.path.splitext(os.path.basename(file))[0] + '.7z" "' + file + '"')  # normal compression
 
 # Check if URL has HTTP 200 or HTTP 300-308 status code			 
 def availability(url):
@@ -153,13 +171,13 @@ def crc32hash(filepath):
 	prev = 0
 	for line in open(filepath, 'rb'):
 		prev = zlib.crc32(line, prev)
-	return "%X"%(prev & 0xFFFFFFFF)
+	return "%X" % (prev & 0xFFFFFFFF)
 # Adler32
 def adler32hash(filepath):
 	prev = 0
 	for line in open(filepath, 'rb'):
 		prev = zlib.adler32(line, prev)
-	return "%X"%(prev & 0xFFFFFFFF)
+	return "%X" % (prev & 0xFFFFFFFF)
 
 # SHA-1
 def sha1hash(filepath, blocksize=16 * 1024 * 1024):
@@ -246,8 +264,8 @@ def md5hash(filepath, blocksize=16 * 1024 * 1024):
 	return md5.hexdigest()
 
 # Use choice of hash functions for all files in a directory
-def verify(workingdir, blocksize=16 * 1024 * 1024, crc32=False, adler32=False, sha1=True, sha224=False, sha256=False, sha384=False, sha512=False, md5=True):
-	print("CRC32:", crc32, "ADLER32:", adler32, "SHA1:", sha1, "SHA224:", sha224, "SHA256:", sha256, "SHA384:", sha384, "SHA512:", sha512, "MD5:", md5)
+def verifier(workingdir, blocksize=16 * 1024 * 1024, crc32=False, adler32=False, sha1=True, sha224=False, sha256=False, sha384=False, sha512=False, md5=True):
+	print("ADLER32:", adler32, "CRC32:", crc32, "MD5:", md5, "\nSHA1:", sha1, "SHA224:", sha224, "SHA256:", sha256, "\nSHA384:", sha384, "SHA512:", sha512, "\n")
 	hashoutput_crc32 = "CRC32\n"
 	hashoutput_adler32 = "Adler32\n"
 	hashoutput_sha1 = "SHA1\n"
@@ -257,94 +275,75 @@ def verify(workingdir, blocksize=16 * 1024 * 1024, crc32=False, adler32=False, s
 	hashoutput_sha512 = "SHA512\n"
 	hashoutput_md5 = "MD5\n"
 	for file in os.listdir(workingdir):
-		try:
-			statinfo = os.stat(file)
-			filesize = str(statinfo.st_size) + " bytes"
-		except Exception:
-			filesize = ""
-			pass
 		if os.path.isdir(os.path.join(workingdir, file)):
 			pass  # exclude folders
 		elif file.endswith(".cksum"):
 			pass  # exclude already generated files
 		else:
-			if crc32 == True:
-				print("CRC32:", str(file), "\n")
-				result_crc32 = crc32hash(os.path.join(workingdir, file))
-				hashoutput_crc32 += str(result_crc32.upper())
-				hashoutput_crc32 += " "
-				hashoutput_crc32 += str(file)
-				hashoutput_crc32 += " "
-				hashoutput_crc32 += filesize
-				hashoutput_crc32 += " \n"
 			if adler32 == True:
-				print("Adler32:", str(file), "\n")
+				print("Adler32:", str(file))
 				result_adler32 = adler32hash(os.path.join(workingdir, file))
 				hashoutput_adler32 += str(result_adler32.upper())
 				hashoutput_adler32 += " "
 				hashoutput_adler32 += str(file)
-				hashoutput_adler32 += " "
-				hashoutput_adler32 += filesize
 				hashoutput_adler32 += " \n"
-			if sha1 == True:
-				print("SHA1:", str(file), "\n")
-				result_sha1 = sha1hash(os.path.join(workingdir, file))
-				hashoutput_sha1 += str(result_sha1.upper())
-				hashoutput_sha1 += " "
-				hashoutput_sha1 += str(file)
-				hashoutput_sha1 += " "
-				hashoutput_sha1 += filesize
-				hashoutput_sha1 += " \n"
-			if sha224 == True:
-				print("SHA224:", str(file), "\n")
-				result_sha224 = sha224hash(os.path.join(workingdir, file))
-				hashoutput_sha224 += str(result_sha224.upper())
-				hashoutput_sha224 += " "
-				hashoutput_sha224 += str(file)
-				hashoutput_sha224 += " "
-				hashoutput_sha224 += filesize
-				hashoutput_sha224 += " \n"
-			if sha256 == True:
-				print("SHA256:", str(file), "\n")
-				result_sha256 = sha256hash(os.path.join(workingdir, file))
-				hashoutput_sha256 += str(result_sha256.upper())
-				hashoutput_sha256 += " "
-				hashoutput_sha256 += str(file)
-				hashoutput_sha256 += " "
-				hashoutput_sha256 += filesize
-				hashoutput_sha256 += " \n"
-			if sha384 == True:
-				print("SHA384:", str(file), "\n")
-				result_sha384 = sha384hash(os.path.join(workingdir, file))
-				hashoutput_sha384 += str(result_sha384.upper())
-				hashoutput_sha384 += " "
-				hashoutput_sha384 += str(file)
-				hashoutput_sha384 += " "
-				hashoutput_sha384 += filesize
-				hashoutput_sha384 += " \n"
-			if sha512 == True:
-				print("SHA512:", str(file), "\n")
-				result_sha512 = sha512hash(os.path.join(workingdir, file))
-				hashoutput_sha512 += str(result_sha512.upper())
-				hashoutput_sha512 += " "
-				hashoutput_sha512 += str(file)
-				hashoutput_sha512 += " "
-				hashoutput_sha512 += filesize
-				hashoutput_sha512 += " \n"
 			if md5 == True:
-				print("MD5:", str(file), "\n")
+				print("MD5:", str(file))
 				result_md5 = md5hash(os.path.join(workingdir, file))
 				hashoutput_md5 += str(result_md5.upper())
 				hashoutput_md5 += " "
 				hashoutput_md5 += str(file)
-				hashoutput_md5 += " "
-				hashoutput_md5 += filesize
 				hashoutput_md5 += " \n"
+			if crc32 == True:
+				print("CRC32:", str(file))
+				result_crc32 = crc32hash(os.path.join(workingdir, file))
+				hashoutput_crc32 += str(result_crc32.upper())
+				hashoutput_crc32 += " "
+				hashoutput_crc32 += str(file)
+				hashoutput_crc32 += " \n"
+			if sha1 == True:
+				print("SHA1:", str(file))
+				result_sha1 = sha1hash(os.path.join(workingdir, file))
+				hashoutput_sha1 += str(result_sha1.upper())
+				hashoutput_sha1 += " "
+				hashoutput_sha1 += str(file)
+				hashoutput_sha1 += " \n"
+			if sha224 == True:
+				print("SHA224:", str(file))
+				result_sha224 = sha224hash(os.path.join(workingdir, file))
+				hashoutput_sha224 += str(result_sha224.upper())
+				hashoutput_sha224 += " "
+				hashoutput_sha224 += str(file)
+				hashoutput_sha224 += " \n"
+			if sha256 == True:
+				print("SHA256:", str(file))
+				result_sha256 = sha256hash(os.path.join(workingdir, file))
+				hashoutput_sha256 += str(result_sha256.upper())
+				hashoutput_sha256 += " "
+				hashoutput_sha256 += str(file)
+				hashoutput_sha256 += " \n"
+			if sha384 == True:
+				print("SHA384:", str(file))
+				result_sha384 = sha384hash(os.path.join(workingdir, file))
+				hashoutput_sha384 += str(result_sha384.upper())
+				hashoutput_sha384 += " "
+				hashoutput_sha384 += str(file)
+				hashoutput_sha384 += " \n"
+			if sha512 == True:
+				print("SHA512:", str(file))
+				result_sha512 = sha512hash(os.path.join(workingdir, file))
+				hashoutput_sha512 += str(result_sha512.upper())
+				hashoutput_sha512 += " "
+				hashoutput_sha512 += str(file)
+				hashoutput_sha512 += " \n"
+			print("\n")
 	target = open(os.path.join(workingdir, 'all.cksum'), 'w')
-	if crc32 == True:
-		target.write(hashoutput_crc32 + "\n")
 	if adler32 == True:
 		target.write(hashoutput_adler32 + "\n")
+	if crc32 == True:
+		target.write(hashoutput_crc32 + "\n")
+	if md5 == True:
+		target.write(hashoutput_md5 + "\n")
 	if sha1 == True:
 		target.write(hashoutput_sha1 + "\n")
 	if sha224 == True:
@@ -355,8 +354,6 @@ def verify(workingdir, blocksize=16 * 1024 * 1024, crc32=False, adler32=False, s
 		target.write(hashoutput_sha384 + "\n")
 	if sha512 == True:
 		target.write(hashoutput_sha512 + "\n")
-	if md5 == True:
-		target.write(hashoutput_md5 + "\n")
 	target.close()
 		
 def generateLoaders(osversion, radioversion, radios):
@@ -404,13 +401,13 @@ def generateLoaders(osversion, radioversion, radios):
 	else:
 		print("Creating OMAP Z10 OS...\n")
 		try:
-			os.system("cap.exe create " + os_ti + " " + radio_z10_ti + " Z10_" + osversion + "_STL100-1.exe")
+			subprocess.Popen("cap.exe create " + os_ti + " " + radio_z10_ti + " Z10_" + osversion + "_STL100-1.exe").wait()
 		except Exception:
 			print("Could not create STL100-1 OS/radio loader\n")
 		if radios == True:
 			print("Creating OMAP Z10 radio...\n")
 			try:
-				os.system("cap.exe create " + radio_z10_ti + " Z10_" + radioversion + "_STL100-1.exe")
+				subprocess.Popen("cap.exe create " + radio_z10_ti + " Z10_" + radioversion + "_STL100-1.exe").wait()
 			except Exception:
 				print("Could not create STL100-1 radio loader\n")
 
@@ -422,13 +419,13 @@ def generateLoaders(osversion, radioversion, radios):
 	else:
 		print("Creating Qualcomm Z10 OS...\n")
 		try:
-			os.system("cap.exe create " + os_8960 + " " + radio_z10_qcm + " Z10_" + osversion + "_STL100-2-3.exe")
+			subprocess.Popen("cap.exe create " + os_8960 + " " + radio_z10_qcm + " Z10_" + osversion + "_STL100-2-3.exe").wait()
 		except Exception:
 			print("Could not create Qualcomm Z10 OS/radio loader\n")
 		if radios == True:
 			print("Creating Qualcomm Z10 radio...\n")
 			try:
-				os.system("cap.exe create " + radio_z10_qcm + " Z10_" + radioversion + "_STL100-2-3.exe")
+				subprocess.Popen("cap.exe create " + radio_z10_qcm + " Z10_" + radioversion + "_STL100-2-3.exe").wait()
 			except Exception:
 				print("Could not create Qualcomm Z10 radio loader\n")
 
@@ -440,13 +437,13 @@ def generateLoaders(osversion, radioversion, radios):
 	else:
 		print("Creating Verizon Z10 OS...\n")
 		try:
-			os.system("cap.exe create " + os_8960 + " " + radio_z10_vzw + " Z10_" + osversion + "_STL100-4.exe")
+			subprocess.Popen("cap.exe create " + os_8960 + " " + radio_z10_vzw + " Z10_" + osversion + "_STL100-4.exe").wait()
 		except Exception:
 			print("Could not create Verizon Z10 OS/radio loader\n")
 		if radios == True:
 			print("Creating Verizon Z10 radio...\n")
 			try:
-				os.system("cap.exe create " + radio_z10_vzw + " Z10_" + radioversion + "_STL100-4.exe")
+				subprocess.Popen("cap.exe create " + radio_z10_vzw + " Z10_" + radioversion + "_STL100-4.exe").wait()
 			except Exception:
 				print("Could not create Verizon Z10 radio loader\n")
 
@@ -458,13 +455,13 @@ def generateLoaders(osversion, radioversion, radios):
 	else:
 		print("Creating Q10/Q5 OS...\n")
 		try:
-			os.system("cap.exe create " + os_8960 + " " + radio_q10 + " Q10_" + osversion + "_SQN100-1-2-3-4-5.exe")
+			subprocess.Popen("cap.exe create " + os_8960 + " " + radio_q10 + " Q10_" + osversion + "_SQN100-1-2-3-4-5.exe").wait()
 		except Exception:
 			print("Could not create Q10/Q5 OS/radio loader\n")
 		if radios == True:
 			print("Creating Q10/Q5 radio...\n")
 			try:
-				os.system("cap.exe create " + radio_q10 + " Q10_" + radioversion + "_SQN100-1-2-3-4-5.exe")
+				subprocess.Popen("cap.exe create " + radio_q10 + " Q10_" + radioversion + "_SQN100-1-2-3-4-5.exe").wait()
 			except Exception:
 				print("Could not create Q10/Q5 radio loader\n")
 
@@ -476,13 +473,13 @@ def generateLoaders(osversion, radioversion, radios):
 	else:
 		print("Creating Z30/Classic OS...\n")
 		try:
-			os.system("cap.exe create " + os_8960 + " " + radio_z30 + " Z30_" + osversion + "_STA100-1-2-3-4-5-6.exe")
+			subprocess.Popen("cap.exe create " + os_8960 + " " + radio_z30 + " Z30_" + osversion + "_STA100-1-2-3-4-5-6.exe").wait()
 		except Exception:
 			print("Could not create Z30/Classic OS/radio loader\n")
 		if radios == True:
 			print("Creating Z30/Classic radio...\n")
 			try:
-				os.system("cap.exe create " + radio_z30 + " Z30_" + radioversion + "_STA100-1-2-3-4-5-6.exe")
+				subprocess.Popen("cap.exe create " + radio_z30 + " Z30_" + radioversion + "_STA100-1-2-3-4-5-6.exe").wait()
 			except Exception:
 				print("Could not create Z30/Classic radio loader\n")
 
@@ -496,13 +493,13 @@ def generateLoaders(osversion, radioversion, radios):
 	else:
 		print("Creating Z3 OS...\n")
 		try:
-			os.system("cap.exe create " + os_8x30 + " " + radio_z3 + " Z3_" + osversion + "_STJ100-1-2.exe")
+			subprocess.Popen("cap.exe create " + os_8x30 + " " + radio_z3 + " Z3_" + osversion + "_STJ100-1-2.exe").wait()
 		except Exception:
 			print("Could not create Z3 OS/radio loader (8x30)\n")
 		if radios == True:
 			print("Creating Z3 radio...\n")
 			try:
-				os.system("cap.exe create " + radio_z3 + " Z3_" + radioversion + "_STJ100-1-2.exe")
+				subprocess.Popen("cap.exe create " + radio_z3 + " Z3_" + radioversion + "_STJ100-1-2.exe").wait()
 			except Exception:
 				print("Could not create Z3 radio loader\n")
 
@@ -516,20 +513,38 @@ def generateLoaders(osversion, radioversion, radios):
 	else:
 		print("Creating Passport OS...\n")
 		try:
-			os.system("cap.exe create " + os_8974 + " " + radio_8974 + " Passport_" + osversion + "_SQW100-1-2-3.exe")
+			subprocess.Popen("cap.exe create " + os_8974 + " " + radio_8974 + " Passport_" + osversion + "_SQW100-1-2-3.exe").wait()
 		except Exception:
 			print("Could not create Passport OS/radio loader\n")
 		if radios == True:
 			print("Creating Passport radio...\n")
 			try:
-				os.system("cap.exe create " + radio_8974 + " Passport_" + radioversion + "_SQW100-1-2-3.exe")
+				subprocess.Popen("cap.exe create " + radio_8974 + " Passport_" + radioversion + "_SQW100-1-2-3.exe").wait()
 			except Exception:
 				print("Could not create Passport radio loader\n")
 
 def doMagic(osversion, radioversion, softwareversion, localdir, radios=True, received=True, deleted=True, hashed=True, crc32=False, adler32=False, sha1=True, sha224=False, sha256=False, sha384=False, sha512=False, md5=True):
+	version = "2015-04-11-C"  # update as needed
+	release = "https://github.com/thurask/archivist/releases/latest"
+	
+	print("~~~ARCHIVIST VERSION", version + "~~~")
 	print("OS VERSION:", osversion)
 	print("RADIO VERSION:", radioversion)
 	print("SOFTWARE VERSION:", softwareversion, "\n")
+	
+	print("CHECKING FOR UPDATES...")
+	update = updateCheck(version)
+	if update == True:
+		print("UPDATE AVAILABLE!")
+		invoke = str2bool(input("DOWNLOAD UPDATE? Y/N: "))
+		if invoke == True:
+			webbrowser.open(release)
+			print("CLOSING...")
+			raise SystemExit  # bye
+		else:
+			pass
+	else:
+		print("NO UPDATE AVAILABLE...\n")
 	
 	# Hash software version
 	swhash = hashlib.sha1(softwareversion.encode('utf-8'))
@@ -538,13 +553,13 @@ def doMagic(osversion, radioversion, softwareversion, localdir, radios=True, rec
 	# root of all urls
 	baseurl = "http://cdn.fs.sl.blackberry.com/fs/qnx/production/" + hashedsoftwareversion
 	
-	#list of OS urls
+	# list of OS urls
 	osurls = [baseurl + "/winchester.factory_sfi.desktop-" + osversion + "-nto+armle-v7+signed.bar",
 		baseurl + "/qc8960.factory_sfi.desktop-" + osversion + "-nto+armle-v7+signed.bar",
 		baseurl + "/qc8960.factory_sfi_hybrid_qc8x30.desktop-" + osversion + "-nto+armle-v7+signed.bar",
 		baseurl + "/qc8960.factory_sfi_hybrid_qc8974.desktop-" + osversion + "-nto+armle-v7+signed.bar"]
 
-#list of radio urls
+	# list of radio urls
 	radiourls = [baseurl + "/m5730-" + radioversion + "-nto+armle-v7+signed.bar",
 		baseurl + "/qc8960-" + radioversion + "-nto+armle-v7+signed.bar",
 		baseurl + "/qc8960.omadm-" + radioversion + "-nto+armle-v7+signed.bar",
@@ -563,14 +578,14 @@ def doMagic(osversion, radioversion, softwareversion, localdir, radios=True, rec
 	# Check availability of software release
 	av = availability(baseurl)
 	if(av == True):
-		print("\nSOFTWARE RELEASE", softwareversion, "EXISTS\n")
+		print("\nSOFTWARE RELEASE", softwareversion, "EXISTS")
 	else:
-		print("\nSOFTWARE RELEASE", softwareversion, "NOT FOUND\n")
+		print("\nSOFTWARE RELEASE", softwareversion, "NOT FOUND")
 		cont = str2bool(input("CONTINUE? Y/N "))
 		if (cont == True):
 			pass
 		else:
-			print("\nExiting...")
+			print("\nEXITING...")
 			raise SystemExit  # bye bye
 	
 	# Make dirs
@@ -604,32 +619,17 @@ def doMagic(osversion, radioversion, softwareversion, localdir, radios=True, rec
 		os.mkdir(os.path.join(zipdir, radioversion))
 	zipdir_radio = os.path.join(zipdir, radioversion)
 	
+	# Download files
 	download_manager = DownloadManager(radiodict, localdir, 5)
 	download_manager.begin_downloads()
 	download_manager.download_dict = osdict
 	download_manager.begin_downloads()
 		
+	# Extract bar files
 	extractBar(localdir)
-
-	# Create loaders
-	generateLoaders(osversion, radioversion, radios)
-
-	# Remove .signed files
-	print("REMOVING .signed FILES...\n")
-	for file in os.listdir(localdir):
-		if file.endswith(".signed"):
-			print("REMOVING: " + file)
-			os.remove(file)
-
-	# If compression = true, compress
-	if received == True:
-		print("\nCOMPRESSING...\n")
-		compress(localdir)
-	else:
-		pass
-
-	print("\nMOVING...\n")
-
+	
+	# Move bar files
+	print("MOVING .bar FILES...")
 	for files in os.listdir(localdir):
 		if files.endswith(".bar"):
 			print("MOVING: " + files)
@@ -637,6 +637,27 @@ def doMagic(osversion, radioversion, softwareversion, localdir, radios=True, rec
 				shutil.move(files, bardir_os)
 			else:
 				shutil.move(files, bardir_radio)
+
+	# Create loaders
+	generateLoaders(osversion, radioversion, radios)
+
+	# Remove .signed files
+	print("REMOVING .signed FILES...")
+	for file in os.listdir(localdir):
+		if file.endswith(".signed"):
+			print("REMOVING: " + file)
+			os.remove(file)
+
+	# If compression = true, compress
+	if received == True:
+		print("\nCOMPRESSING...")
+		compress(localdir)
+	else:
+		pass
+
+	# Move zipped/unzipped loaders
+	print("\nMOVING...\n")
+	for files in os.listdir(localdir):
 		if files.endswith(".exe") and files.startswith(("Q10", "Z10", "Z30", "Z3", "Passport")):
 			print("MOVING: " + files)
 			if os.path.getsize(files) > 90000000:
@@ -651,29 +672,30 @@ def doMagic(osversion, radioversion, softwareversion, localdir, radios=True, rec
 				else:
 					shutil.move(files, zipdir_radio)
 
-	# Get SHA-1 hashes (if specified)
+	# Get hashes (if specified)
 	if hashed == True:
 		print("\nHASHING LOADERS...")
 		if received == True:
-			verify(zipdir_os, 16 * 1024 * 1024, crc32, adler32, sha1, sha224, sha256, sha384, sha512, md5)
-			verify(zipdir_radio, 16 * 1024 * 1024, crc32, adler32, sha1, sha224, sha256, sha384, sha512, md5)
+			verifier(zipdir_os, 16 * 1024 * 1024, crc32, adler32, sha1, sha224, sha256, sha384, sha512, md5)
+			verifier(zipdir_radio, 16 * 1024 * 1024, crc32, adler32, sha1, sha224, sha256, sha384, sha512, md5)
 		if deleted == False:
-			verify(loaderdir_os, 16 * 1024 * 1024, crc32, adler32, sha1, sha224, sha256, sha384, sha512, md5)
-			verify(loaderdir_radio, 16 * 1024 * 1024, crc32, adler32, sha1, sha224, sha256, sha384, sha512, md5)
+			verifier(loaderdir_os, 16 * 1024 * 1024, crc32, adler32, sha1, sha224, sha256, sha384, sha512, md5)
+			verifier(loaderdir_radio, 16 * 1024 * 1024, crc32, adler32, sha1, sha224, sha256, sha384, sha512, md5)
 
 	# Remove uncompressed loaders (if specified)
 	if deleted == True:
 		print("\nDELETING UNCOMPRESSED LOADERS...")
 		shutil.rmtree(loaderdir)
-		
+	
+	# Delete empty folders
 	if received == False:
 		shutil.rmtree(zipdir)
 
-	print("\nFINISHED!\n")
+	print("\nFINISHED!")
 
 if __name__ == '__main__':
 	if len(sys.argv) > 1:
-		parser = argparse.ArgumentParser(description="Download bar files, create autoloaders.", usage="%(prog)s OSVERSION RADIOVERSION SWVERSION [options]", epilog = "http://github.com/thurask/archivist")
+		parser = argparse.ArgumentParser(description="Download bar files, create autoloaders.", usage="%(prog)s OSVERSION RADIOVERSION SWVERSION [options]", epilog="http://github.com/thurask/archivist")
 		parser.add_argument("os", help="OS version, 10.x.y.zzzz")
 		parser.add_argument("radio", help="Radio version, 10.x.y.zzzz")
 		parser.add_argument("swrelease", help="Software version, 10.x.y.zzzz")

@@ -532,7 +532,7 @@ def generateLoaders(osversion, radioversion, radios):
 				print("Could not create Passport radio loader")
 
 def doMagic(osversion, radioversion, softwareversion, localdir, radios=True, compressed=True, deleted=True, hashed=True, crc32=False, adler32=False, sha1=True, sha224=False, sha256=False, sha384=False, sha512=False, md5=True):
-	version = "2015-04-11-C"  # update as needed
+	version = "2015-04-12-A"  # update as needed
 	release = "https://github.com/thurask/archivist/releases/latest"
 	
 	print("~~~ARCHIVIST VERSION", version + "~~~")

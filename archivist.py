@@ -131,9 +131,9 @@ def compress(filepath):
 		if file.endswith(".exe") and file.startswith(("Q10", "Z10", "Z30", "Z3", "Passport")):
 			print("\nCOMPRESSING: " + os.path.splitext(os.path.basename(file))[0] + ".exe @mmt" + getCoreCount())
 			if is64Bit() == True:
-				os.system(getSevenZip() + " a -mx9 -mmt" + getCoreCount() + " -m0=lzma2:d128m:fb128 " + '"' + os.path.splitext(os.path.basename(file))[0] + '.7z" "' + file + '"')
+				os.system(getSevenZip() + " a -mx9 -m0=lzma2 -mmt" + getCoreCount() + " " + '"' + os.path.splitext(os.path.basename(file))[0] + '.7z" "' + file + '"') #ultra compression
 			else:
-				os.system(getSevenZip() + " a -mx9 -mmt" + getCoreCount() + " " + '"' + os.path.splitext(os.path.basename(file))[0] + '.7z" "' + file + '"')
+				os.system(getSevenZip() + " a -mx5 -m0=lzma2 -mmt" + getCoreCount() + " " + '"' + os.path.splitext(os.path.basename(file))[0] + '.7z" "' + file + '"') #normal compression
 
 # Check if URL has HTTP 200 or HTTP 300-308 status code			 
 def availability(url):

@@ -131,12 +131,10 @@ def getCoreCount():
 
 # Extract bars with 7z
 def extractBar(filepath):
-	print("EXTRACTING...")
 	for file in os.listdir(filepath):
 		if file.endswith(".bar"):
 			try:
-				print("\nEXTRACTING: " + file + "\n")
-				subprocess.Popen(getSevenZip() + " x " + '"' + file + '" *.signed -aos')
+				subprocess.call(getSevenZip() + " x " + '"' + file + '" *.signed -aos', shell=True)
 			except Exception:
 				print("EXTRACTION FAILURE")
 				print("DID IT DOWNLOAD PROPERLY?")
@@ -149,9 +147,9 @@ def compress(filepath):
 		if file.endswith(".exe") and file.startswith(("Q10", "Z10", "Z30", "Z3", "Passport")):
 			print("COMPRESSING: " + os.path.splitext(os.path.basename(file))[0] + ".exe @mmt" + getCoreCount())
 			if is64Bit() == True:
-				subprocess.Popen(getSevenZip() + " a -mx9 -m0=lzma2 -mmt" + getCoreCount() + " " + '"' + os.path.splitext(os.path.basename(file))[0] + '.7z" "' + file + '"')  # ultra compression
+				subprocess.call(getSevenZip() + " a -mx9 -m0=lzma2 -mmt" + getCoreCount() + " " + '"' + os.path.splitext(os.path.basename(file))[0] + '.7z" "' + file + '"', shell=True)  # ultra compression
 			else:
-				subprocess.Popen(getSevenZip() + " a -mx5 -m0=lzma2 -mmt" + getCoreCount() + " " + '"' + os.path.splitext(os.path.basename(file))[0] + '.7z" "' + file + '"')  # normal compression
+				subprocess.call(getSevenZip() + " a -mx5 -m0=lzma2 -mmt" + getCoreCount() + " " + '"' + os.path.splitext(os.path.basename(file))[0] + '.7z" "' + file + '"', shell=True)  # normal compression
 
 # Check if URL has HTTP 200 or HTTP 300-308 status code			 
 def availability(url):
@@ -362,25 +360,25 @@ def generateLoaders(osversion, radioversion, radios):
 	try:
 		os_8960 = str(glob.glob("*qc8960*_sfi.desktop*.signed")[0])
 	except IndexError:
-		print("\nNo 8960 image found\n")
+		print("No 8960 image found")
 
 	# 8x30 (10.3.1 MR+)
 	try:
 		os_8x30 = str(glob.glob("*qc8x30*desktop*.signed")[0])
 	except IndexError:
-		print("No 8x30 image found\n")
+		print("No 8x30 image found")
 
 	# 8974
 	try:
 		os_8974 = str(glob.glob("*qc8974*desktop*.signed")[0])
 	except IndexError:
-		print("No 8974 image found\n")
+		print("No 8974 image found")
 
 	# OMAP (incl. 10.3.1)
 	try:
 		os_ti = str(glob.glob("*winchester*.signed")[0])
 	except IndexError:
-			print("No OMAP image found\n")
+			print("No OMAP image found")
 			
 	# Pretty format names
 	splitos = osversion.split(".")
@@ -397,91 +395,91 @@ def generateLoaders(osversion, radioversion, radios):
 	try:
 		radio_z10_ti = str(glob.glob("*radio.m5730*.signed")[0])
 	except IndexError:
-		print("No OMAP radio found\n")
+		print("No OMAP radio found")
 	else:
-		print("Creating OMAP Z10 OS...\n")
+		print("Creating OMAP Z10 OS...")
 		try:
-			subprocess.Popen("cap.exe create " + os_ti + " " + radio_z10_ti + " Z10_" + osversion + "_STL100-1.exe").wait()
+			subprocess.call("cap.exe create " + os_ti + " " + radio_z10_ti + " Z10_" + osversion + "_STL100-1.exe", shell=True)
 		except Exception:
-			print("Could not create STL100-1 OS/radio loader\n")
+			print("Could not create STL100-1 OS/radio loader")
 		if radios == True:
-			print("Creating OMAP Z10 radio...\n")
+			print("Creating OMAP Z10 radio...")
 			try:
-				subprocess.Popen("cap.exe create " + radio_z10_ti + " Z10_" + radioversion + "_STL100-1.exe").wait()
+				subprocess.call("cap.exe create " + radio_z10_ti + " Z10_" + radioversion + "_STL100-1.exe", shell=True)
 			except Exception:
-				print("Could not create STL100-1 radio loader\n")
+				print("Could not create STL100-1 radio loader")
 
 	# STL100-X
 	try:
 		radio_z10_qcm = str(glob.glob("*radio.qc8960.BB*.signed")[0])
 	except IndexError:
-		print("No 8960 radio found\n")
+		print("No 8960 radio found")
 	else:
-		print("Creating Qualcomm Z10 OS...\n")
+		print("Creating Qualcomm Z10 OS...")
 		try:
-			subprocess.Popen("cap.exe create " + os_8960 + " " + radio_z10_qcm + " Z10_" + osversion + "_STL100-2-3.exe").wait()
+			subprocess.call("cap.exe create " + os_8960 + " " + radio_z10_qcm + " Z10_" + osversion + "_STL100-2-3.exe", shell=True)
 		except Exception:
-			print("Could not create Qualcomm Z10 OS/radio loader\n")
+			print("Could not create Qualcomm Z10 OS/radio loader")
 		if radios == True:
-			print("Creating Qualcomm Z10 radio...\n")
+			print("Creating Qualcomm Z10 radio...")
 			try:
-				subprocess.Popen("cap.exe create " + radio_z10_qcm + " Z10_" + radioversion + "_STL100-2-3.exe").wait()
+				subprocess.call("cap.exe create " + radio_z10_qcm + " Z10_" + radioversion + "_STL100-2-3.exe", shell=True)
 			except Exception:
-				print("Could not create Qualcomm Z10 radio loader\n")
+				print("Could not create Qualcomm Z10 radio loader")
 
 	# STL100-4
 	try:
 		radio_z10_vzw = str(glob.glob("*radio.qc8960*omadm*.signed")[0])
 	except IndexError:
-		print("No Verizon 8960 radio found\n")
+		print("No Verizon 8960 radio found")
 	else:
-		print("Creating Verizon Z10 OS...\n")
+		print("Creating Verizon Z10 OS...")
 		try:
-			subprocess.Popen("cap.exe create " + os_8960 + " " + radio_z10_vzw + " Z10_" + osversion + "_STL100-4.exe").wait()
+			subprocess.call("cap.exe create " + os_8960 + " " + radio_z10_vzw + " Z10_" + osversion + "_STL100-4.exe", shell=True)
 		except Exception:
-			print("Could not create Verizon Z10 OS/radio loader\n")
+			print("Could not create Verizon Z10 OS/radio loader")
 		if radios == True:
-			print("Creating Verizon Z10 radio...\n")
+			print("Creating Verizon Z10 radio...")
 			try:
-				subprocess.Popen("cap.exe create " + radio_z10_vzw + " Z10_" + radioversion + "_STL100-4.exe").wait()
+				subprocess.call("cap.exe create " + radio_z10_vzw + " Z10_" + radioversion + "_STL100-4.exe", shell=True)
 			except Exception:
-				print("Could not create Verizon Z10 radio loader\n")
+				print("Could not create Verizon Z10 radio loader")
 
 	# Q10/Q5
 	try:
 		radio_q10 = str(glob.glob("*8960*wtr.*.signed")[0])
 	except IndexError:
-		print("No Q10/Q5 radio found\n")
+		print("No Q10/Q5 radio found")
 	else:
-		print("Creating Q10/Q5 OS...\n")
+		print("Creating Q10/Q5 OS...")
 		try:
-			subprocess.Popen("cap.exe create " + os_8960 + " " + radio_q10 + " Q10_" + osversion + "_SQN100-1-2-3-4-5.exe").wait()
+			subprocess.call("cap.exe create " + os_8960 + " " + radio_q10 + " Q10_" + osversion + "_SQN100-1-2-3-4-5.exe", shell=True)
 		except Exception:
-			print("Could not create Q10/Q5 OS/radio loader\n")
+			print("Could not create Q10/Q5 OS/radio loader")
 		if radios == True:
-			print("Creating Q10/Q5 radio...\n")
+			print("Creating Q10/Q5 radio...")
 			try:
-				subprocess.Popen("cap.exe create " + radio_q10 + " Q10_" + radioversion + "_SQN100-1-2-3-4-5.exe").wait()
+				subprocess.call("cap.exe create " + radio_q10 + " Q10_" + radioversion + "_SQN100-1-2-3-4-5.exe", shell=True)
 			except Exception:
-				print("Could not create Q10/Q5 radio loader\n")
+				print("Could not create Q10/Q5 radio loader")
 
 	# Z30/Classic
 	try:
 		radio_z30 = str(glob.glob("*8960*wtr5*.signed")[0])
 	except IndexError:
-		print("No Z30/Classic radio found\n")
+		print("No Z30/Classic radio found")
 	else:
-		print("Creating Z30/Classic OS...\n")
+		print("Creating Z30/Classic OS...")
 		try:
-			subprocess.Popen("cap.exe create " + os_8960 + " " + radio_z30 + " Z30_" + osversion + "_STA100-1-2-3-4-5-6.exe").wait()
+			subprocess.call("cap.exe create " + os_8960 + " " + radio_z30 + " Z30_" + osversion + "_STA100-1-2-3-4-5-6.exe", shell=True)
 		except Exception:
-			print("Could not create Z30/Classic OS/radio loader\n")
+			print("Could not create Z30/Classic OS/radio loader")
 		if radios == True:
-			print("Creating Z30/Classic radio...\n")
+			print("Creating Z30/Classic radio...")
 			try:
-				subprocess.Popen("cap.exe create " + radio_z30 + " Z30_" + radioversion + "_STA100-1-2-3-4-5-6.exe").wait()
+				subprocess.call("cap.exe create " + radio_z30 + " Z30_" + radioversion + "_STA100-1-2-3-4-5-6.exe", shell=True)
 			except Exception:
-				print("Could not create Z30/Classic radio loader\n")
+				print("Could not create Z30/Classic radio loader")
 
 
 
@@ -489,50 +487,50 @@ def generateLoaders(osversion, radioversion, radios):
 	try:
 		radio_z3 = str(glob.glob("*8930*wtr5*.signed")[0])
 	except IndexError:
-		print("No Z3 radio found\n")
+		print("No Z3 radio found")
 	else:
-		print("Creating Z3 OS...\n")
+		print("Creating Z3 OS...")
 		try:
-			subprocess.Popen("cap.exe create " + os_8x30 + " " + radio_z3 + " Z3_" + osversion + "_STJ100-1-2.exe").wait()
+			subprocess.call("cap.exe create " + os_8x30 + " " + radio_z3 + " Z3_" + osversion + "_STJ100-1-2.exe", shell=True)
 		except Exception:
-			print("Could not create Z3 OS/radio loader (8x30)\n")
+			print("Could not create Z3 OS/radio loader (8x30)")
 		if radios == True:
-			print("Creating Z3 radio...\n")
+			print("Creating Z3 radio...")
 			try:
-				subprocess.Popen("cap.exe create " + radio_z3 + " Z3_" + radioversion + "_STJ100-1-2.exe").wait()
+				subprocess.call("cap.exe create " + radio_z3 + " Z3_" + radioversion + "_STJ100-1-2.exe", shell=True)
 			except Exception:
-				print("Could not create Z3 radio loader\n")
+				print("Could not create Z3 radio loader")
 
 	# Passport
 	try:
 		radio_8974 = str(glob.glob("*8974*wtr2*.signed")[0])
 	except NameError:
-		print("No 8974 OS found\n")
+		print("No 8974 OS found")
 	except IndexError:
-		print("No Passport radio found\n")
+		print("No Passport radio found")
 	else:
-		print("Creating Passport OS...\n")
+		print("Creating Passport OS...")
 		try:
-			subprocess.Popen("cap.exe create " + os_8974 + " " + radio_8974 + " Passport_" + osversion + "_SQW100-1-2-3.exe").wait()
+			subprocess.call("cap.exe create " + os_8974 + " " + radio_8974 + " Passport_" + osversion + "_SQW100-1-2-3.exe", shell=True)
 		except Exception:
-			print("Could not create Passport OS/radio loader\n")
+			print("Could not create Passport OS/radio loader")
 		if radios == True:
-			print("Creating Passport radio...\n")
+			print("Creating Passport radio...")
 			try:
-				subprocess.Popen("cap.exe create " + radio_8974 + " Passport_" + radioversion + "_SQW100-1-2-3.exe").wait()
+				subprocess.call("cap.exe create " + radio_8974 + " Passport_" + radioversion + "_SQW100-1-2-3.exe", shell=True)
 			except Exception:
-				print("Could not create Passport radio loader\n")
+				print("Could not create Passport radio loader")
 
-def doMagic(osversion, radioversion, softwareversion, localdir, radios=True, received=True, deleted=True, hashed=True, crc32=False, adler32=False, sha1=True, sha224=False, sha256=False, sha384=False, sha512=False, md5=True):
+def doMagic(osversion, radioversion, softwareversion, localdir, radios=True, compressed=True, deleted=True, hashed=True, crc32=False, adler32=False, sha1=True, sha224=False, sha256=False, sha384=False, sha512=False, md5=True):
 	version = "2015-04-11-C"  # update as needed
 	release = "https://github.com/thurask/archivist/releases/latest"
 	
 	print("~~~ARCHIVIST VERSION", version + "~~~")
 	print("OS VERSION:", osversion)
 	print("RADIO VERSION:", radioversion)
-	print("SOFTWARE VERSION:", softwareversion, "\n")
+	print("SOFTWARE VERSION:", softwareversion)
 	
-	print("CHECKING FOR UPDATES...")
+	print("\nCHECKING FOR UPDATES...")
 	update = updateCheck(version)
 	if update == True:
 		print("UPDATE AVAILABLE!")
@@ -544,22 +542,22 @@ def doMagic(osversion, radioversion, softwareversion, localdir, radios=True, rec
 		else:
 			pass
 	else:
-		print("NO UPDATE AVAILABLE...\n")
+		print("NO UPDATE AVAILABLE...")
 	
 	# Hash software version
 	swhash = hashlib.sha1(softwareversion.encode('utf-8'))
 	hashedsoftwareversion = swhash.hexdigest()
 	
-	# root of all urls
+	# Root of all urls
 	baseurl = "http://cdn.fs.sl.blackberry.com/fs/qnx/production/" + hashedsoftwareversion
 	
-	# list of OS urls
+	# List of OS urls
 	osurls = [baseurl + "/winchester.factory_sfi.desktop-" + osversion + "-nto+armle-v7+signed.bar",
 		baseurl + "/qc8960.factory_sfi.desktop-" + osversion + "-nto+armle-v7+signed.bar",
 		baseurl + "/qc8960.factory_sfi_hybrid_qc8x30.desktop-" + osversion + "-nto+armle-v7+signed.bar",
 		baseurl + "/qc8960.factory_sfi_hybrid_qc8974.desktop-" + osversion + "-nto+armle-v7+signed.bar"]
 
-	# list of radio urls
+	# List of radio urls
 	radiourls = [baseurl + "/m5730-" + radioversion + "-nto+armle-v7+signed.bar",
 		baseurl + "/qc8960-" + radioversion + "-nto+armle-v7+signed.bar",
 		baseurl + "/qc8960.omadm-" + radioversion + "-nto+armle-v7+signed.bar",
@@ -568,6 +566,7 @@ def doMagic(osversion, radioversion, softwareversion, localdir, radios=True, rec
 		baseurl + "/qc8930.wtr5-" + radioversion + "-nto+armle-v7+signed.bar",
 		baseurl + "/qc8974.wtr2-" + radioversion + "-nto+armle-v7+signed.bar"]
 
+	# Add URLs to dict, programmatically
 	osdict = {}
 	radiodict = {}
 	for i in osurls:
@@ -620,62 +619,89 @@ def doMagic(osversion, radioversion, softwareversion, localdir, radios=True, rec
 	zipdir_radio = os.path.join(zipdir, radioversion)
 	
 	# Download files
+	print("\nBEGIN DOWNLOADING...")
 	download_manager = DownloadManager(radiodict, localdir, 5)
 	download_manager.begin_downloads()
 	download_manager.download_dict = osdict
 	download_manager.begin_downloads()
 		
 	# Extract bar files
+	print("\nEXTRACTING...")
 	extractBar(localdir)
 	
 	# Move bar files
-	print("MOVING .bar FILES...")
+	print("\nMOVING .bar FILES...")
 	for files in os.listdir(localdir):
 		if files.endswith(".bar"):
 			print("MOVING: " + files)
+			bardest_os = os.path.join(bardir_os, files)
+			bardest_radio = os.path.join(bardir_radio, files)
 			if os.path.getsize(files) > 90000000:  # even the fattest radio is less than 90MB
-				shutil.move(files, bardir_os)
+				try:
+					shutil.move(files, bardir_os)
+				except shutil.Error:
+					os.remove(bardest_os)
 			else:
-				shutil.move(files, bardir_radio)
+				try:
+					shutil.move(files, bardir_radio)
+				except shutil.Error:
+					os.remove(bardest_radio)
 
 	# Create loaders
+	print("\nGENERATING LOADERS...")
 	generateLoaders(osversion, radioversion, radios)
 
 	# Remove .signed files
-	print("REMOVING .signed FILES...")
+	print("\nREMOVING .signed FILES...")
 	for file in os.listdir(localdir):
 		if file.endswith(".signed"):
 			print("REMOVING: " + file)
 			os.remove(file)
 
 	# If compression = true, compress
-	if received == True:
+	if compressed == True:
 		print("\nCOMPRESSING...")
 		compress(localdir)
 	else:
 		pass
 
 	# Move zipped/unzipped loaders
-	print("\nMOVING...\n")
+	print("\nMOVING...")
 	for files in os.listdir(localdir):
 		if files.endswith(".exe") and files.startswith(("Q10", "Z10", "Z30", "Z3", "Passport")):
 			print("MOVING: " + files)
-			if os.path.getsize(files) > 90000000:
-				shutil.move(files, loaderdir_os)
+			loaderdest_os = os.path.join(loaderdir_os, files)
+			loaderdest_radio = os.path.join(loaderdir_radio, files)
+			if os.path.getsize(files) > 90000000:  # even the fattest radio is less than 90MB
+				try:
+					shutil.move(files, loaderdir_os)
+				except shutil.Error:
+					os.remove(loaderdest_os)
 			else:
-				shutil.move(files, loaderdir_radio)
-		if received == True:
+				try:
+					shutil.move(files, loaderdir_radio)
+				except shutil.Error:
+					os.remove(loaderdest_radio)
+		if compressed == True:
 			if files.endswith(".7z"):
 				print("MOVING: " + files)
-				if os.path.getsize(files) > 90000000:
-					shutil.move(files, zipdir_os)
+				zipdest_os = os.path.join(zipdir_os, files)
+				zipdest_radio = os.path.join(zipdir_radio, files)
+				if os.path.getsize(files) > 90000000:  # even the fattest radio is less than 90MB
+					try:
+						shutil.move(files, zipdir_os)
+					except shutil.Error:
+						os.remove(zipdest_os)
 				else:
-					shutil.move(files, zipdir_radio)
+					try:
+						shutil.move(files, zipdir_radio)
+					except shutil.Error:
+						os.remove(zipdest_radio)
 
 	# Get hashes (if specified)
 	if hashed == True:
 		print("\nHASHING LOADERS...")
-		if received == True:
+		if compressed == True:
 			verifier(zipdir_os, 16 * 1024 * 1024, crc32, adler32, sha1, sha224, sha256, sha384, sha512, md5)
 			verifier(zipdir_radio, 16 * 1024 * 1024, crc32, adler32, sha1, sha224, sha256, sha384, sha512, md5)
 		if deleted == False:
@@ -688,8 +714,16 @@ def doMagic(osversion, radioversion, softwareversion, localdir, radios=True, rec
 		shutil.rmtree(loaderdir)
 	
 	# Delete empty folders
-	if received == False:
-		shutil.rmtree(zipdir)
+	if compressed == False:
+		if (not os.listdir(zipdir_os)) and (not os.listdir(zipdir_radio)):
+			shutil.rmtree(zipdir) # no zipped files if we didn't make them
+	if radios == False:
+		if deleted == False:
+			if not os.listdir(loaderdir_radio):
+				shutil.rmtree(loaderdir_radio) # we don't want to keep an empty radio dir with our non-empty os dir
+		if compressed == True:
+			if not os.listdir(zipdir_radio):
+				shutil.rmtree(zipdir_radio) # as above, but for zipped radios
 
 	print("\nFINISHED!")
 
@@ -719,12 +753,12 @@ if __name__ == '__main__':
 		radioversion = input("RADIO VERSION: ")
 		softwareversion = input("SOFTWARE RELEASE: ")
 		radios = str2bool(input("CREATE RADIO LOADERS? Y/N: "))
-		received = str2bool(input("COMPRESS LOADERS? Y/N: "))
-		if received == True:
+		compressed = str2bool(input("COMPRESS LOADERS? Y/N: "))
+		if compressed == True:
 			deleted = str2bool(input("DELETE UNCOMPRESSED? Y/N: "))
 		else:
 			deleted = False
 		hashed = str2bool(input("GENERATE HASHES? Y/N: "))
 		print(" ")
-		doMagic(osversion, radioversion, softwareversion, localdir, radios, received, deleted, hashed, False, False, True, False, False, False, False, True)
+		doMagic(osversion, radioversion, softwareversion, localdir, radios, compressed, deleted, hashed, False, False, True, False, False, False, False, True)
 	smeg = input("Press Enter to exit")

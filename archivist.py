@@ -166,16 +166,26 @@ def availability(url):
 # Hash/verification functions; perform operation on specific file
 # CRC32
 def crc32hash(filepath):
-	prev = 0
-	for line in open(filepath, 'rb'):
-		prev = zlib.crc32(line, prev)
-	return "%X" % (prev & 0xFFFFFFFF)
+	seed = 0
+	with open(filepath, 'rb') as file:
+		for line in file:
+			seed = zlib.crc32(line, seed)
+	final = format(seed & 0xFFFFFFFF, "x")
+	return final
+
 # Adler32
-def adler32hash(filepath):
-	prev = 0
-	for line in open(filepath, 'rb'):
-		prev = zlib.adler32(line, prev)
-	return "%X" % (prev & 0xFFFFFFFF)
+def adler32hash(filepath, blocksize=16 * 1024 * 1024):
+	with open(filepath, "rb") as f:
+		data = f.read(blocksize)
+		seed = zlib.adler32(data)
+		rdata = f.read(blocksize)
+		while rdata:
+			for i in range(len(rdata)):
+				seed = zlib.adler32(data[i:]+rdata[:i])
+			data = rdata
+			rdata = f.read(blocksize)
+	final = format(seed & 0xFFFFFFFF, "x")
+	return final
 
 # SHA-1
 def sha1hash(filepath, blocksize=16 * 1024 * 1024):

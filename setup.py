@@ -11,7 +11,7 @@ executables = [
 ]
 
 setup(name='archivist',
-      version = '2014-04-12-A',
+      version = '2014-04-13-A',
       description = 'Downloads bar files, creates autoloaders',
       options = dict(build_exe = buildOptions),
       executables = executables)

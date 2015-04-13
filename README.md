@@ -34,47 +34,43 @@ Those listed in Operation, plus (preferably) conversion to executable formats vi
 
     usage: archivist.exe OSVERSION RADIOVERSION SWVERSION [options]
 
-    Download bar files, create autoloaders.
-
-    positional arguments:
-
-        os                  OS version, 10.x.y.zzzz
-      
-        radio               Radio version, 10.x.y.zzzz
-      
-        swrelease           Software version, 10.x.y.zzzz
-  
-    optional arguments:
-
-        -h, --help          show this help message and exit
-      
-        --no-radio-loaders  Don't make radio loaders
-      
-        --no-compress       Don't compress loaders
-      
-        --no-delete-uncomp  Don't delete uncompressed loaders
-        
-        --no-verify         Don't verify created loaders
-        
-        --crc32             Enable CRC32 verification
-        
-        --adler32           Enable Adler32 verification
-        
-        --sha224            Enable SHA-224 verification
-        
-        --sha384            Enable SHA-384 verification
-        
-        --sha512            Enable SHA-512 verification
-        
-        --no-sha1           Disable SHA-1 verification
-        
-        --no-sha256         Disable SHA-256 verification
-        
-        --no-md5            Disable MD5 verification
+	Download bar files, create autoloaders.
+	
+	positional arguments:
+	  os                    OS version, 10.x.y.zzzz
+	  radio                 Radio version, 10.x.y.zzzz
+	  swrelease             Software version, 10.x.y.zzzz
+	
+	optional arguments:
+	  -h, --help            show this help message and exit
+	  -f FOLDER, --folder FOLDER
+	                        Working folder
+	  -c CAPPATH, --cap-path CAPPATH
+	                        Path to cap.exe
+	  -no, --no-download    Don't download files
+	  -nx, --no-extract     Don't extract bar files
+	  -nl, --no-loaders     Don't create autoloaders
+	  -nr, --no-radios      Don't make radio autoloaders
+	  -ns, --no-rmsigned    Don't remove signed files
+	  -nc, --no-compress    Don't compress loaders
+	  -nd, --no-delete      Don't delete uncompressed loaders
+	  -nv, --no-verify      Don't verify created loaders
+	  --crc32               Enable CRC32 verification
+	  --adler32             Enable Adler-32 verification
+	  --md4                 Enable MD4 verification
+	  --sha224              Enable SHA-224 verification
+	  --sha384              Enable SHA-384 verification
+	  --sha512              Enable SHA-512 verification
+	  --ripemd160           Enable RIPEMD-160 verification
+	  --no-sha1             Disable SHA-1 verification
+	  --no-sha256           Disable SHA-256 verification
+	  --no-md5              Disable MD5 verification
+	
+	http://github.com/thurask/archivist
     
 ### Example
   
-    > archivist.exe 10.3.1.2726 10.3.1.2727 10.3.1.1877 --no-radio-loaders --sha512 --no-md5
+    > archivist.exe 10.3.1.2726 10.3.1.2727 10.3.1.1877 -nr --sha512 --no-md5
   
   would make OS-only autoloaders for 10.3.1.2726/10.3.1.2727, compress them, delete uncompressed loaders and verify with SHA-1, SHA-256, SHA-512.
 

@@ -77,3 +77,11 @@ Those listed in Operation, plus (preferably) conversion to executable formats vi
     > archivist.exe 10.3.1.2726 10.3.1.2727 10.3.1.1877 --no-radio-loaders --sha512 --no-md5
   
   would make OS-only autoloaders for 10.3.1.2726/10.3.1.2727, compress them, delete uncompressed loaders and verify with SHA-1, SHA-256, SHA-512.
+
+## License
+No fancy licensing here, just fork this and do whatever.
+Although, if you figure out something interesting, please do try to put it upstream via pull request.
+
+## Authors
+* Thurask [(@thuraski)](http://www.twitter.com/thuraski)
+* Viewers Like You

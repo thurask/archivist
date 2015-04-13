@@ -125,20 +125,22 @@ def sha512hash(filepath, blocksize=16 * 1024 * 1024):
 		f.close()
 	return sha512.hexdigest()
 
-# MD5
+# MD4
 def md4hash(filepath, blocksize=16 * 1024 * 1024):
-	md4 = hashlib.new('md4')
-	f = open(filepath, 'rb')
 	try:
-		while True:
-			data = f.read(blocksize)
-			if not data:
-				break
-			md4.update(data)  # read in 16MB chunks, not whole autoloader
-	finally:
-		f.close()
-	return md4.hexdigest()
-
+		md4 = hashlib.new('md4')
+		f = open(filepath, 'rb')
+		try:
+			while True:
+				data = f.read(blocksize)
+				if not data:
+					break
+				md4.update(data)  # read in 16MB chunks, not whole autoloader
+		finally:
+			f.close()
+		return md4.hexdigest()
+	except Exception:
+		print("MD4 HASH FAILED:\nIS IT AVAILABLE?")
 
 # MD5
 def md5hash(filepath, blocksize=16 * 1024 * 1024):
@@ -154,8 +156,25 @@ def md5hash(filepath, blocksize=16 * 1024 * 1024):
 		f.close()
 	return md5.hexdigest()
 
+# RIPEMD160
+def ripemd160hash(filepath, blocksize=16 * 1024 * 1024):
+	try:
+		r160 = hashlib.new('ripemd160')
+		f = open(filepath, 'rb')
+		try:
+			while True:
+				data = f.read(blocksize)
+				if not data:
+					break
+				r160.update(data)  # read in 16MB chunks, not whole autoloader
+		finally:
+			f.close()
+		return r160.hexdigest()
+	except Exception:
+		print("RIPEMD160 HASH FAILED:\nIS IT AVAILABLE?")
+
 # Use choice of hash functions for all files in a directory
-def verifier(workingdir, blocksize=16 * 1024 * 1024, crc32=False, adler32=False, sha1=True, sha224=False, sha256=False, sha384=False, sha512=False, md5=True, md4=False):
+def verifier(workingdir, blocksize=16 * 1024 * 1024, crc32=False, adler32=False, sha1=True, sha224=False, sha256=False, sha384=False, sha512=False, md5=True, md4=False, ripemd160=False):
 	target = open(os.path.join(workingdir, 'all.cksum'), 'w')
 	hashoutput_crc32 = "CRC32\n"
 	hashoutput_adler32 = "ADLER32\n"
@@ -166,6 +185,7 @@ def verifier(workingdir, blocksize=16 * 1024 * 1024, crc32=False, adler32=False,
 	hashoutput_sha512 = "SHA512\n"
 	hashoutput_md5 = "MD5\n"
 	hashoutput_md4 = "MD4\n"
+	hashoutput_ripemd160 = "RIPEMD160\n"
 	for file in os.listdir(workingdir):
 		if os.path.isdir(os.path.join(workingdir, file)):
 			pass  # exclude folders
@@ -235,6 +255,13 @@ def verifier(workingdir, blocksize=16 * 1024 * 1024, crc32=False, adler32=False,
 				hashoutput_sha512 += " "
 				hashoutput_sha512 += str(file)
 				hashoutput_sha512 += " \n"
+			if ripemd160 == True:
+				print("RIPEMD160:", str(file))
+				result_ripemd160 = ripemd160hash(os.path.join(workingdir, file), blocksize)
+				hashoutput_ripemd160 += str(result_ripemd160.upper())
+				hashoutput_ripemd160 += " "
+				hashoutput_ripemd160 += str(file)
+				hashoutput_ripemd160 += " \n"
 			print("\n")
 	if adler32 == True:
 		target.write(hashoutput_adler32 + "\n")
@@ -254,6 +281,8 @@ def verifier(workingdir, blocksize=16 * 1024 * 1024, crc32=False, adler32=False,
 		target.write(hashoutput_sha384 + "\n")
 	if sha512 == True:
 		target.write(hashoutput_sha512 + "\n")
+	if ripemd160 == True:
+		target.write(hashoutput_ripemd160 + "\n")
 	target.close()
 
 def ghettoConvert(intsize):
@@ -764,7 +793,7 @@ def generateLoaders(osversion, radioversion, radios, cap="cap.exe", localdir=os.
 		except Exception:
 			print("Could not create Passport radio loader")
 
-def doMagic(osversion, radioversion, softwareversion, localdir, radios=True, compressed=True, deleted=True, hashed=True, crc32=False, adler32=False, sha1=True, sha224=False, sha256=False, sha384=False, sha512=False, md5=True, md4=False, cappath="cap.exe", download=True, extract=True, loaders=True, signed=True):
+def doMagic(osversion, radioversion, softwareversion, localdir, radios=True, compressed=True, deleted=True, hashed=True, crc32=False, adler32=False, sha1=True, sha224=False, sha256=False, sha384=False, sha512=False, md5=True, md4=False, ripemd160=False, cappath="cap.exe", download=True, extract=True, loaders=True, signed=True):
 	starttime = time.clock()
 	version = "2015-04-12-A"  # update as needed
 	release = "https://github.com/thurask/archivist/releases/latest"
@@ -947,14 +976,16 @@ def doMagic(osversion, radioversion, softwareversion, localdir, radios=True, com
 	# Get hashes (if specified)
 	if hashed == True:
 		print("\nHASHING LOADERS...")
-		print("ADLER32:", adler32, "CRC32:", crc32, "MD4:", md4, "\nMD5:", md5, "SHA1:", sha1, "SHA224:", sha224, "\nSHA256:", sha256, "SHA384:", sha384, "SHA512:", sha512, "\n")
+		print("ADLER32:", adler32, "CRC32:", crc32, "MD4:", md4, "\nMD5:", md5, "SHA1:", sha1, "SHA224:", sha224, "\nSHA256:", sha256, "SHA384:", sha384, "SHA512:", sha512, "\nRIPEMD160:", ripemd160, "\n")
 		blocksize = 32*1024*1024
-		#if compressed == True:
-		verifier(zipdir_os, blocksize, crc32, adler32, sha1, sha224, sha256, sha384, sha512, md5, md4)
-		verifier(zipdir_radio, blocksize, crc32, adler32, sha1, sha224, sha256, sha384, sha512, md5, md4)
+		if compressed == True:
+			verifier(zipdir_os, blocksize, crc32, adler32, sha1, sha224, sha256, sha384, sha512, md5, md4, ripemd160)
+			if radios == True:
+				verifier(zipdir_radio, blocksize, crc32, adler32, sha1, sha224, sha256, sha384, sha512, md5, md4, ripemd160)
 		if deleted == False:
-			verifier(loaderdir_os, blocksize, crc32, adler32, sha1, sha224, sha256, sha384, sha512, md5, md4)
-			verifier(loaderdir_radio, blocksize, crc32, adler32, sha1, sha224, sha256, sha384, sha512, md5, md4)
+			verifier(loaderdir_os, blocksize, crc32, adler32, sha1, sha224, sha256, sha384, sha512, md5, md4, ripemd160)
+			if radios == True:
+				verifier(loaderdir_radio, blocksize, crc32, adler32, sha1, sha224, sha256, sha384, sha512, md5, md4, ripemd160)
 
 	# Remove uncompressed loaders (if specified)
 	if deleted == True:
@@ -1000,11 +1031,12 @@ if __name__ == '__main__':
 		parser.add_argument("--sha224", dest="sha224", help="Enable SHA-224 verification", action="store_true", default=False)
 		parser.add_argument("--sha384", dest="sha384", help="Enable SHA-384 verification", action="store_true", default=False)
 		parser.add_argument("--sha512", dest="sha512", help="Enable SHA-512 verification", action="store_true", default=False)
+		parser.add_argument("--ripemd160", dest="ripemd160", help="Enable RIPEMD-160 verification", action="store_true", default=False)
 		parser.add_argument("--no-sha1", dest="sha1", help="Disable SHA-1 verification", action="store_false", default=True)
 		parser.add_argument("--no-sha256", dest="sha256", help="Disable SHA-256 verification", action="store_false", default=True)
 		parser.add_argument("--no-md5", dest="md5", help="Disable MD5 verification", action="store_false", default=True)
 		args = parser.parse_args(sys.argv[1:])
-		doMagic(args.os, args.radio, args.swrelease, args.folder, args.radloaders, args.compress, args.delete, args.verify, args.crc32, args.adler32, args.sha1, args.sha224, args.sha256, args.sha384, args.sha512, args.md5, args.md4, args.cappath, args.download, args.extract, args.loaders, args.signed)
+		doMagic(args.os, args.radio, args.swrelease, args.folder, args.radloaders, args.compress, args.delete, args.verify, args.crc32, args.adler32, args.sha1, args.sha224, args.sha256, args.sha384, args.sha512, args.md5, args.md4, args.ripemd160, args.cappath, args.download, args.extract, args.loaders, args.signed)
 	else:
 		localdir = os.getcwd()
 		osversion = input("OS VERSION: ")
@@ -1018,5 +1050,5 @@ if __name__ == '__main__':
 			deleted = False
 		hashed = str2bool(input("GENERATE HASHES? Y/N: "))
 		print(" ")
-		doMagic(osversion, radioversion, softwareversion, localdir, radios, compressed, deleted, hashed, False, False, True, False, False, False, False, True, False, "cap.exe", True, True, True, True)
+		doMagic(osversion, radioversion, softwareversion, localdir, radios, compressed, deleted, hashed, False, False, True, False, False, False, False, True, False, False, "cap.exe", True, True, True, True)
 	smeg = input("Press Enter to exit")

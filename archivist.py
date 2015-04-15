@@ -1138,7 +1138,7 @@ def doMagic(osversion, radioversion, softwareversion, localdir, radios=True, com
 if __name__ == '__main__':
 	if len(sys.argv) > 1:
 		parser = argparse.ArgumentParser(prog="archivist", description="Download bar files, create autoloaders.", epilog="http://github.com/thurask/archivist")
-		parser.add_argument("-v", "--version", action="version", version="%(prog)s 2015-04-13-A")
+		parser.add_argument("-v", "--version", action="version", version="%(prog)s " + _version)
 		parser.add_argument("os", help="OS version, 10.x.y.zzzz")
 		parser.add_argument("radio", help="Radio version, 10.x.y.zzzz")
 		parser.add_argument("swrelease", help="Software version, 10.x.y.zzzz")

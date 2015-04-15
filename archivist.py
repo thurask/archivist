@@ -19,7 +19,6 @@ import subprocess  # invocation of 7z, cap
 import zlib  # adler32, crc32
 import zipfile  # zip extract, zip compresssion
 import tarfile  # txz/tbz/tgz compression
-import winreg  # windows registry
 
 _version = "2015-04-13-A"
 _release = "https://github.com/thurask/archivist/releases/latest"
@@ -588,6 +587,7 @@ def winSevenZip(talkative=False):
 	if talkative:
 		print("CHECKING INSTALLED FILES...")
 	try:
+		import winreg  # windows registry
 		hk7z = winreg.OpenKey(winreg.HKEY_CURRENT_USER, "Software\\7-Zip")
 		path = winreg.QueryValueEx(hk7z, "Path")
 	except Exception as e:

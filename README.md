@@ -12,7 +12,7 @@ It doesn't actually run cap.exe, so just download the file and save it in the sa
 
 Since it does the entire autoloader process for all devices from start to finish, make sure to have A LOT of hard drive space. 40GB at least, even more if you aren't using 7-Zip compression.
 
-If you're using this as a .py file, it requires Python =>3.4.2.
+If you're using this as a .py file, it requires Python =>3.4.2. It also requires the [requests](http://docs.python-requests.org/en/latest/user/install/) library installed somehow.
 
 7-Zip compression (default) uses [p7zip](http://sourceforge.net/projects/p7zip/) (Linux/Mac)/[7-Zip](http://www.7-zip.org/download.html) (Windows). Zip and tar.xxx compression don't require external programs.
 
@@ -22,6 +22,7 @@ By default, the script uses any installed instances of 7-Zip first.
 If you're using them locally, 32-bit 7za.exe should be included as 7za.exe and 64-bit 7za.exe should be included as 7za64.exe.
 
 If you're using the release .exe, extract everything into a folder (all .exes, .pyds and .dlls).
+If you're using the .py file, install requests with easy_install or pip (I recommend [pip-win](https://sites.google.com/site/pydatalog/python/pip-for-windows)).
 
 ### Linux
 If you're using 7z compression, this requires p7zip (look through your package manager, or install from source) in your path. I.e.:
@@ -29,6 +30,8 @@ If you're using 7z compression, this requires p7zip (look through your package m
 	$which 7za
 	
 resolves to something.
+
+Your package manager should have a python-requests package available. If not, or if you want the latest, download from the link in the Universal section.
 
 Other than that, download archivist.py and make it executable with chmod.
 

@@ -13,6 +13,11 @@ It doesn't actually run cap.exe, so just download the file and save it in the sa
 Since it does the entire autoloader process for all devices from start to finish, make sure to have A LOT of hard drive space. 40GB at least, even more if you aren't using 7-Zip compression.
 
 If you're using this as a .py file, it requires Python =>3.4.2. It also requires the [requests](http://docs.python-requests.org/en/latest/user/install/) library installed somehow.
+To install requests really easily, using pip:
+	
+	$ pip install -r \path\to\requirements.txt
+	
+To use pip-win, just put that (corrected, of course) into pip-win's Command field and hit Run. It'll automatically download whichever pypi packages are dependencies of this one.
 
 7-Zip compression (default) uses [p7zip](http://sourceforge.net/projects/p7zip/) (Linux/Mac)/[7-Zip](http://www.7-zip.org/download.html) (Windows). Zip and tar.xxx compression don't require external programs.
 

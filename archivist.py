@@ -1,17 +1,4 @@
-##############################
-# ARCHIVIST.PY				 #
-# 							 #
-# Requirements:				 #
-# 7za.exe					 #
-# 7za64.exe					 #
-# cap.exe					 #
-# Windows					 #
-# 							 #
-# Instructions:				 #
-# Read the CMD prompt :p	 #
-# 							 #
-# - Thurask					 #
-##############################
+#!/usr/bin/env python3
 
 import os  # filesystem read
 import glob  # string matching for files
@@ -28,8 +15,14 @@ import threading  # downloader multithreading
 import binascii  # downloader thread naming
 import math  # rounding of floats
 import webbrowser  # invoke browser if update is there
-import subprocess # invocation of 7z, cap
-import zlib #adler32, crc32
+import subprocess  # invocation of 7z, cap
+import zlib  # adler32, crc32
+import zipfile  # zip extract, zip compresssion
+import tarfile  # txz/tbz/tgz compression
+import winreg  # windows registry
+
+_version = "2015-04-13-A"
+_release = "https://github.com/thurask/archivist/releases/latest"
 
 # Hash/verification functions; perform operation on specific file
 # CRC32
@@ -51,7 +44,7 @@ def adler32hash(filepath, blocksize=16 * 1024 * 1024):
 				break
 			asum = zlib.adler32(data, asum)
 			if asum < 0:
-				asum += 2**32
+				asum += 2 ** 32
 	final = format(asum & 0xFFFFFFFF, "x")
 	return final
 
@@ -302,7 +295,7 @@ def makeOffset(cap, firstfile, secondfile="", thirdfile="", fourthfile="", fifth
 		if i:
 			filecount += 1
 	# immutable things
-	separator = binascii.unhexlify("6ADF5D144E4B4D4E474F46464D4E532B170A0D1E0C14532B372A2D3E2C34522F3C534F514F514F514F534E464D514E4947514E51474F70709CD5C5979CD5C5979CD5C597") #3.11.0.18
+	separator = binascii.unhexlify("6ADF5D144E4B4D4E474F46464D4E532B170A0D1E0C14532B372A2D3E2C34522F3C534F514F514F514F534E464D514E4947514E51474F70709CD5C5979CD5C5979CD5C597")  # 3.11.0.18
 	password = binascii.unhexlify("0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000")
 	singlepad = binascii.unhexlify("00")
 	doublepad = binascii.unhexlify("0000")
@@ -491,7 +484,7 @@ def updateCheck(version):
 	update = False
 	updatesite = "https://raw.githubusercontent.com/thurask/thurask.github.io/master/archivist.version"
 	print("LOCAL VERSION:", version)
-	urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)  #silence warnings about no SSL
+	urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)  # silence warnings about no SSL
 	get = requests.get(updatesite, verify=False)  # don't use SSL until I figure it out
 	remote = str(get.text).strip()
 	print("REMOTE VERSION:", remote)
@@ -571,12 +564,57 @@ def is64Bit():
 	amd64 = platform.machine().endswith("64")
 	return amd64
 
-# Set 7z executable based on bit type
-def getSevenZip():
-	if is64Bit() == True:
-		return "7za64.exe"
+def isWindows():
+	windows = platform.system() == "Windows"
+	return windows
+
+def isMac():
+	mac = platform.system() == "Darwin"
+	return mac
+
+def isLinux():
+	linux = platform.system() == "Linux"
+	return linux
+
+# Set 7z executable based on bit type, if installed
+def getSevenZip(talkative=False):
+	if isWindows():
+		smeg = winSevenZip(talkative)
+		return smeg
 	else:
-		return "7za.exe"
+		return "7za"
+	
+def winSevenZip(talkative=False):
+	if talkative:
+		print("CHECKING INSTALLED FILES...")
+	try:
+		hk7z = winreg.OpenKey(winreg.HKEY_CURRENT_USER, "Software\\7-Zip")
+		path = winreg.QueryValueEx(hk7z, "Path")
+	except Exception as e:
+		if talkative:
+			print("SOMETHING WENT WRONG")
+			print(str(e))
+			print("TRYING LOCAL FILES...")
+		listdir = os.listdir(os.getcwd())
+		filecount = 0
+		for i in listdir:
+			if i == "7za.exe" or i == "7za64.exe":
+				filecount += 1
+		if filecount == 2:
+			if talkative:
+				print("7ZIP USING LOCAL FILES")
+			if is64Bit() == True:
+				return "7za64.exe"
+			else:
+				return "7za.exe"
+		else:
+			if talkative:
+				print("NO LOCAL FILES")
+			return "error"
+	else:
+		if talkative:
+			print("7ZIP USING INSTALLED FILES")
+		return '"' + os.path.join(path[0], "7z.exe") + '"'
 	
 # Get corecount, with fallback 
 def getCoreCount():
@@ -585,29 +623,99 @@ def getCoreCount():
 		cores = str(1)
 	return cores
 
+def prepSevenZip():
+	if isMac():
+		path = shutil.which("7za")
+		if path == None:
+			print("NO 7ZIP")
+			print("PLEASE INSTALL p7zip FROM SOURCE/HOMEBREW/MACPORTS")
+			return False
+		else:
+			print("7ZIP FOUND AT", path)
+			return True
+	elif isLinux():
+		path = shutil.which("7za")
+		if path == None:
+			print("NO 7ZIP")
+			print("PLEASE INSTALL p7zip AND ANY RELATED PACKAGES")
+			print("CONSULT YOUR PACKAGE MANAGER, OR GOOGLE IT")
+			return False
+		else:
+			print("7ZIP FOUND AT", path)
+			return True
+	elif isWindows():
+		smeg = getSevenZip(True)
+		if smeg == "error":
+			return False
+		else:
+			return True
+
 # Extract bars with 7z
 def extractBar(filepath):
 	for file in os.listdir(filepath):
 		if file.endswith(".bar"):
 			try:
-				subprocess.call(getSevenZip() + " x " + '"' + os.path.join(filepath, file) + '" *.signed -aos -o' + filepath, shell=True)
+				z = zipfile.ZipFile(file, 'r')
+				names = z.namelist()
+				for name in names:
+					if str(name).endswith(".signed"):
+						z.extract(name, filepath)
 			except Exception:
 				print("EXTRACTION FAILURE")
 				print("DID IT DOWNLOAD PROPERLY?")
 				return
+			
+def reset(tarinfo):
+	tarinfo.uid = tarinfo.gid = 0
+	tarinfo.uname = tarinfo.gname = "root"
+	return tarinfo
 	
 # Compress loaders with 7z
-# #WARNING: Requires a lot of RAM.
-def compress(filepath):
+def compress(filepath, method="7z", szexe="7za.exe"):
 	for file in os.listdir(filepath):
 		if file.endswith(".exe") and file.startswith(("Q10", "Z10", "Z30", "Z3", "Passport")):
-			print("COMPRESSING: " + os.path.splitext(os.path.basename(file))[0] + ".exe @mmt" + getCoreCount())
-			if is64Bit() == True:
-				strength = "-mx9" #ultra compression
+			filename = os.path.splitext(os.path.basename(file))[0]
+			fileloc = os.path.join(filepath, filename)
+			print("COMPRESSING: " + filename + ".exe")
+			if is64Bit():
+				strength = 9  # ultra compression
 			else:
-				strength = "-mx5" #normal compression
-			subprocess.call(getSevenZip() + " a " + strength + " -m0=lzma2 -mmt" + getCoreCount() + " " + os.path.join(filepath, os.path.splitext(os.path.basename(os.path.join(filepath, file)))[0] + '.7z') + " " + os.path.join(filepath, file), shell=True)
-
+				strength = 5  # normal compression
+			if method == "7z":
+				starttime = time.clock()
+				subprocess.call(szexe + " a -mx" + str(strength) + " -m0=lzma2 -mmt" + getCoreCount() + " " + fileloc + '.7z' + " " + os.path.join(filepath, file), shell=True)
+				endtime = time.clock() - starttime
+				endtime_proper = math.ceil(endtime * 100) / 100
+				print("COMPLETED IN " + str(endtime_proper) + " SECONDS")
+			elif method == "tgz":
+				with tarfile.open(fileloc + '.tar.gz', 'w:gz', compresslevel=strength) as gzfile:
+					starttime = time.clock()
+					gzfile.add(file, filter=reset)
+					endtime = time.clock() - starttime
+					endtime_proper = math.ceil(endtime * 100) / 100
+					print("COMPLETED IN " + str(endtime_proper) + " SECONDS")
+			elif method == "txz":
+				with tarfile.open(fileloc + '.tar.xz', 'w:xz') as xzfile:
+					starttime = time.clock()
+					xzfile.add(file, filter=reset)
+					endtime = time.clock() - starttime
+					endtime_proper = math.ceil(endtime * 100) / 100
+					print("COMPLETED IN " + str(endtime_proper) + " SECONDS")
+			elif method == "tbz":
+				with tarfile.open(fileloc + '.tar.bz2', 'w:bz2', compresslevel=strength) as bzfile:
+					starttime = time.clock()
+					bzfile.add(file, filter=reset)
+					endtime = time.clock() - starttime
+					endtime_proper = math.ceil(endtime * 100) / 100
+					print("COMPLETED IN " + str(endtime_proper) + " SECONDS")
+			elif method == "zip":
+				with zipfile.ZipFile(fileloc + '.zip', 'w', zipfile.ZIP_DEFLATED) as zfile:
+					starttime = time.clock()
+					zfile.write(file)
+					endtime = time.clock() - starttime
+					endtime_proper = math.ceil(endtime * 100) / 100
+					print("COMPLETED IN " + str(endtime_proper) + " SECONDS")
+			
 # Check if URL has HTTP 200 or HTTP 300-308 status code			 
 def availability(url):
 	try:
@@ -632,62 +740,62 @@ def generateLoaders(osversion, radioversion, radios, cap="cap.exe", localdir=os.
 
 	# 8x30 (10.3.1 MR+)
 	try:
-		os_8x30 = glob.glob(os.path.join(localdir,"*qc8x30*desktop*.signed"))[0]
+		os_8x30 = glob.glob(os.path.join(localdir, "*qc8x30*desktop*.signed"))[0]
 	except IndexError:
 		print("No 8x30 image found")
 	
 	# 8974
 	try:
-		os_8974 = glob.glob(os.path.join(localdir,"*qc8974*desktop*.signed"))[0]
+		os_8974 = glob.glob(os.path.join(localdir, "*qc8974*desktop*.signed"))[0]
 	except IndexError:
 		print("No 8974 image found")
 	
 	# OMAP (incl. 10.3.1)
 	try:
-		os_ti = glob.glob(os.path.join(localdir,"*winchester*.signed"))[0]
+		os_ti = glob.glob(os.path.join(localdir, "*winchester*.signed"))[0]
 	except IndexError:
 			print("No OMAP image found")
 	
 	# Radio files
 	# STL100-1
 	try:
-		radio_z10_ti = glob.glob(os.path.join(localdir,"*radio.m5730*.signed"))[0]
+		radio_z10_ti = glob.glob(os.path.join(localdir, "*radio.m5730*.signed"))[0]
 	except IndexError:
 		print("No OMAP radio found")
 		
 	# STL100-X
 	try:
-		radio_z10_qcm = glob.glob(os.path.join(localdir,"*radio.qc8960.BB*.signed"))[0]
+		radio_z10_qcm = glob.glob(os.path.join(localdir, "*radio.qc8960.BB*.signed"))[0]
 	except IndexError:
 		print("No 8960 radio found")
 		
 	# STL100-4
 	try:
-		radio_z10_vzw = glob.glob(os.path.join(localdir,"*radio.qc8960*omadm*.signed"))[0]
+		radio_z10_vzw = glob.glob(os.path.join(localdir, "*radio.qc8960*omadm*.signed"))[0]
 	except IndexError:
 		print("No Verizon 8960 radio found")
 		
 	# Q10/Q5
 	try:
-		radio_q10 = glob.glob(os.path.join(localdir,"*8960*wtr.*.signed"))[0]
+		radio_q10 = glob.glob(os.path.join(localdir, "*8960*wtr.*.signed"))[0]
 	except IndexError:
 		print("No Q10/Q5 radio found")
 		
 	# Z30/Classic
 	try:
-		radio_z30 = glob.glob(os.path.join(localdir,"*8960*wtr5*.signed"))[0]
+		radio_z30 = glob.glob(os.path.join(localdir, "*8960*wtr5*.signed"))[0]
 	except IndexError:
 		print("No Z30/Classic radio found")
 		
 	# Z3
 	try:
-		radio_z3 = glob.glob(os.path.join(localdir,"*8930*wtr5*.signed"))[0]
+		radio_z3 = glob.glob(os.path.join(localdir, "*8930*wtr5*.signed"))[0]
 	except IndexError:
 		print("No Z3 radio found")
 		
 	# Passport
 	try:
-		radio_8974 = glob.glob(os.path.join(localdir,"*8974*wtr2*.signed"))[0]
+		radio_8974 = glob.glob(os.path.join(localdir, "*8974*wtr2*.signed"))[0]
 	except IndexError:
 		print("No Passport radio found")
 			
@@ -793,10 +901,10 @@ def generateLoaders(osversion, radioversion, radios, cap="cap.exe", localdir=os.
 		except Exception:
 			print("Could not create Passport radio loader")
 
-def doMagic(osversion, radioversion, softwareversion, localdir, radios=True, compressed=True, deleted=True, hashed=True, crc32=False, adler32=False, sha1=True, sha224=False, sha256=False, sha384=False, sha512=False, md5=True, md4=False, ripemd160=False, cappath="cap.exe", download=True, extract=True, loaders=True, signed=True):
+def doMagic(osversion, radioversion, softwareversion, localdir, radios=True, compressed=True, deleted=True, hashed=True, crc32=False, adler32=False, sha1=True, sha224=False, sha256=False, sha384=False, sha512=False, md5=True, md4=False, ripemd160=False, cappath="cap.exe", download=True, extract=True, loaders=True, signed=True, compmethod="7z"):
 	starttime = time.clock()
-	version = "2015-04-13-A"  # update as needed
-	release = "https://github.com/thurask/archivist/releases/latest"
+	version = _version  # update as needed
+	release = _release
 	
 	print("~~~ARCHIVIST VERSION", version + "~~~")
 	print("OS VERSION:", osversion)
@@ -815,7 +923,25 @@ def doMagic(osversion, radioversion, softwareversion, localdir, radios=True, com
 		else:
 			pass
 	else:
-		print("NO UPDATE AVAILABLE...")
+		print("NO UPDATE AVAILABLE")
+	
+	if compmethod == "7z":
+		print("\nCHECKING PRESENCE OF 7ZIP...")
+		sz = prepSevenZip()
+		if sz == True:
+			print("7ZIP OK")
+			szexe = getSevenZip()
+		else:
+			szexe = ""
+			print("7ZIP NOT FOUND")
+			cont = str2bool(input("CONTINUE? Y/N "))
+			if (cont == True):
+				pass
+			else:
+				print("\nEXITING...")
+				raise SystemExit  # bye bye
+	else:
+		szexe = ""
 	
 	# Hash software version
 	swhash = hashlib.sha1(softwareversion.encode('utf-8'))
@@ -938,7 +1064,7 @@ def doMagic(osversion, radioversion, softwareversion, localdir, radios=True, com
 	# If compression = true, compress
 	if compressed == True:
 		print("\nCOMPRESSING...")
-		compress(localdir)
+		compress(localdir, compmethod, szexe)
 	else:
 		pass
 
@@ -959,7 +1085,7 @@ def doMagic(osversion, radioversion, softwareversion, localdir, radios=True, com
 					shutil.move(os.path.join(localdir, files), loaderdir_radio)
 				except shutil.Error:
 					os.remove(loaderdest_radio)
-		if files.endswith(".7z"):
+		if files.endswith(".7z") or files.endswith(".tar.xz") or files.endswith(".tar.bz2") or files.endswith(".tar.gz") or files.endswith(".zip"):
 				print("MOVING: " + files)
 				zipdest_os = os.path.join(zipdir_os, files)
 				zipdest_radio = os.path.join(zipdir_radio, files)
@@ -973,11 +1099,12 @@ def doMagic(osversion, radioversion, softwareversion, localdir, radios=True, com
 						shutil.move(os.path.join(localdir, files), zipdir_radio)
 					except shutil.Error:
 						os.remove(zipdest_radio)
+						
 	# Get hashes (if specified)
 	if hashed == True:
 		print("\nHASHING LOADERS...")
 		print("ADLER32:", adler32, "CRC32:", crc32, "MD4:", md4, "\nMD5:", md5, "SHA1:", sha1, "SHA224:", sha224, "\nSHA256:", sha256, "SHA384:", sha384, "SHA512:", sha512, "\nRIPEMD160:", ripemd160, "\n")
-		blocksize = 32*1024*1024
+		blocksize = 32 * 1024 * 1024
 		if compressed == True:
 			verifier(zipdir_os, blocksize, crc32, adler32, sha1, sha224, sha256, sha384, sha512, md5, md4, ripemd160)
 			if radios == True:
@@ -995,48 +1122,59 @@ def doMagic(osversion, radioversion, softwareversion, localdir, radios=True, com
 	# Delete empty folders
 	if compressed == False:
 		if (not os.listdir(zipdir_os)) and (not os.listdir(zipdir_radio)):
-			shutil.rmtree(zipdir) # no zipped files if we didn't make them
+			shutil.rmtree(zipdir)  # no zipped files if we didn't make them
 	if radios == False:
 		if deleted == False:
 			if not os.listdir(loaderdir_radio):
-				shutil.rmtree(loaderdir_radio) # we don't want to keep an empty radio dir with our non-empty os dir
+				shutil.rmtree(loaderdir_radio)  # we don't want to keep an empty radio dir with our non-empty os dir
 		if compressed == True:
 			if not os.listdir(zipdir_radio):
-				shutil.rmtree(zipdir_radio) # as above, but for zipped radios
+				shutil.rmtree(zipdir_radio)  # as above, but for zipped radios
 
 	print("\nFINISHED!")
 	endtime = time.clock() - starttime
 	endtime_proper = math.ceil(endtime * 100) / 100
-	print("Completed in " + str(endtime_proper) + " seconds")
+	print("\nCompleted in " + str(endtime_proper) + " seconds\n")
 
 if __name__ == '__main__':
 	if len(sys.argv) > 1:
-		parser = argparse.ArgumentParser(description="Download bar files, create autoloaders.", usage="%(prog)s OSVERSION RADIOVERSION SWVERSION [options]", epilog="http://github.com/thurask/archivist")
+		parser = argparse.ArgumentParser(prog="archivist", description="Download bar files, create autoloaders.", epilog="http://github.com/thurask/archivist")
+		parser.add_argument("-v", "--version", action="version", version="%(prog)s 2015-04-13-A")
 		parser.add_argument("os", help="OS version, 10.x.y.zzzz")
 		parser.add_argument("radio", help="Radio version, 10.x.y.zzzz")
 		parser.add_argument("swrelease", help="Software version, 10.x.y.zzzz")
-		parser.add_argument("-f", "--folder", type=fileExists, dest="folder", help="Working folder", default=os.getcwd())
-		parser.add_argument("-c", "--cap-path", type=fileExists, dest="cappath", help="Path to cap.exe", default=os.path.join(os.getcwd(), "cap.exe"))
-		parser.add_argument("-no", "--no-download", dest="download", help="Don't download files", action="store_false", default=True)
-		parser.add_argument("-nx", "--no-extract", dest="extract", help="Don't extract bar files", action="store_false", default=True)
-		parser.add_argument("-nl", "--no-loaders", dest="loaders", help="Don't create autoloaders", action="store_false", default=True)
-		parser.add_argument("-nr", "--no-radios", dest="radloaders", help="Don't make radio autoloaders", action="store_false", default=True)
-		parser.add_argument("-ns", "--no-rmsigned", dest="signed", help="Don't remove signed files", action="store_false", default=True)
-		parser.add_argument("-nc", "--no-compress", dest="compress", help="Don't compress loaders", action="store_false", default=True)
-		parser.add_argument("-nd", "--no-delete", dest="delete", help="Don't delete uncompressed loaders", action="store_false", default=True)
-		parser.add_argument("-nv", "--no-verify", dest="verify", help="Don't verify created loaders", action="store_false", default=True)
-		parser.add_argument("--crc32", dest="crc32", help="Enable CRC32 verification", action="store_true", default=False)
-		parser.add_argument("--adler32", dest="adler32", help="Enable Adler-32 verification", action="store_true", default=False)
-		parser.add_argument("--md4", dest="md4", help="Enable MD4 verification", action="store_true", default=False)
-		parser.add_argument("--sha224", dest="sha224", help="Enable SHA-224 verification", action="store_true", default=False)
-		parser.add_argument("--sha384", dest="sha384", help="Enable SHA-384 verification", action="store_true", default=False)
-		parser.add_argument("--sha512", dest="sha512", help="Enable SHA-512 verification", action="store_true", default=False)
-		parser.add_argument("--ripemd160", dest="ripemd160", help="Enable RIPEMD-160 verification", action="store_true", default=False)
-		parser.add_argument("--no-sha1", dest="sha1", help="Disable SHA-1 verification", action="store_false", default=True)
-		parser.add_argument("--no-sha256", dest="sha256", help="Disable SHA-256 verification", action="store_false", default=True)
-		parser.add_argument("--no-md5", dest="md5", help="Disable MD5 verification", action="store_false", default=True)
+		parser.add_argument("-f", "--folder", type=fileExists, dest="folder", help="Working folder", default=os.getcwd(), metavar="DIR")
+		parser.add_argument("-c", "--cap", type=fileExists, dest="cappath", help="Path to cap.exe", default=os.path.join(os.getcwd(), "cap.exe"), metavar="PATH")
+		negategroup = parser.add_argument_group("negators", "Disable program functionality")
+		negategroup.add_argument("-no", "--no-download", dest="download", help="Don't download files", action="store_false", default=True)
+		negategroup.add_argument("-nx", "--no-extract", dest="extract", help="Don't extract bar files", action="store_false", default=True)
+		negategroup.add_argument("-nl", "--no-loaders", dest="loaders", help="Don't create autoloaders", action="store_false", default=True)
+		negategroup.add_argument("-nr", "--no-radios", dest="radloaders", help="Don't make radio autoloaders", action="store_false", default=True)
+		negategroup.add_argument("-ns", "--no-rmsigned", dest="signed", help="Don't remove signed files", action="store_false", default=True)
+		negategroup.add_argument("-nc", "--no-compress", dest="compress", help="Don't compress loaders", action="store_false", default=True)
+		negategroup.add_argument("-nd", "--no-delete", dest="delete", help="Don't delete uncompressed loaders", action="store_false", default=True)
+		negategroup.add_argument("-nv", "--no-verify", dest="verify", help="Don't verify created loaders", action="store_false", default=True)
+		hashgroup = parser.add_argument_group("verifiers", "Verification methods")
+		hashgroup.add_argument("--crc32", dest="crc32", help="Enable CRC32 verification", action="store_true", default=False)
+		hashgroup.add_argument("--adler32", dest="adler32", help="Enable Adler-32 verification", action="store_true", default=False)
+		hashgroup.add_argument("--md4", dest="md4", help="Enable MD4 verification", action="store_true", default=False)
+		hashgroup.add_argument("--sha224", dest="sha224", help="Enable SHA-224 verification", action="store_true", default=False)
+		hashgroup.add_argument("--sha384", dest="sha384", help="Enable SHA-384 verification", action="store_true", default=False)
+		hashgroup.add_argument("--sha512", dest="sha512", help="Enable SHA-512 verification", action="store_true", default=False)
+		hashgroup.add_argument("--ripemd160", dest="ripemd160", help="Enable RIPEMD-160 verification", action="store_true", default=False)
+		hashgroup.add_argument("--no-sha1", dest="sha1", help="Disable SHA-1 verification", action="store_false", default=True)
+		hashgroup.add_argument("--no-sha256", dest="sha256", help="Disable SHA-256 verification", action="store_false", default=True)
+		hashgroup.add_argument("--no-md5", dest="md5", help="Disable MD5 verification", action="store_false", default=True)
+		comps = parser.add_argument_group("compressors", "Compression methods")
+		compgroup = comps.add_mutually_exclusive_group()
+		compgroup.add_argument("--7z", dest="compmethod", help="Compress with 7z, LZMA2", action="store_const", const="7z")
+		compgroup.add_argument("--tgz", dest="compmethod", help="Compress with tar, GZIP", action="store_const", const="tgz")
+		compgroup.add_argument("--tbz", dest="compmethod", help="Compress with tar, BZIP2", action="store_const", const="tbz")
+		compgroup.add_argument("--txz", dest="compmethod", help="Compress with tar, LZMA", action="store_const", const="txz")
+		compgroup.add_argument("--zip", dest="compmethod", help="Compress with zip, DEFLATE", action="store_const", const="zip")
+		parser.set_defaults(compmethod="7z")
 		args = parser.parse_args(sys.argv[1:])
-		doMagic(args.os, args.radio, args.swrelease, args.folder, args.radloaders, args.compress, args.delete, args.verify, args.crc32, args.adler32, args.sha1, args.sha224, args.sha256, args.sha384, args.sha512, args.md5, args.md4, args.ripemd160, args.cappath, args.download, args.extract, args.loaders, args.signed)
+		doMagic(args.os, args.radio, args.swrelease, args.folder, args.radloaders, args.compress, args.delete, args.verify, args.crc32, args.adler32, args.sha1, args.sha224, args.sha256, args.sha384, args.sha512, args.md5, args.md4, args.ripemd160, args.cappath, args.download, args.extract, args.loaders, args.signed, args.compmethod)
 	else:
 		localdir = os.getcwd()
 		osversion = input("OS VERSION: ")
@@ -1050,5 +1188,5 @@ if __name__ == '__main__':
 			deleted = False
 		hashed = str2bool(input("GENERATE HASHES? Y/N: "))
 		print(" ")
-		doMagic(osversion, radioversion, softwareversion, localdir, radios, compressed, deleted, hashed, False, False, True, False, False, False, False, True, False, False, "cap.exe", True, True, True, True)
+		doMagic(osversion, radioversion, softwareversion, localdir, radios, compressed, deleted, hashed, False, False, True, False, False, False, False, True, False, False, "cap.exe", True, True, True, True, "7z")
 	smeg = input("Press Enter to exit")

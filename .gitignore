@@ -2,3 +2,4 @@
 *.exe
 *.dll
 *.pyd
+__pycache__

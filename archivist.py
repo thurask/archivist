@@ -20,7 +20,7 @@ import zlib  # adler32, crc32
 import zipfile  # zip extract, zip compresssion
 import tarfile  # txz/tbz/tgz compression
 
-_version = "2015-04-13-A"
+_version = "2015-04-14-B"
 _release = "https://github.com/thurask/archivist/releases/latest"
 
 # Hash/verification functions; perform operation on specific file

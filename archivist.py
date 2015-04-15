@@ -1431,6 +1431,61 @@ def generate_loaders(
             print("Could not create Passport radio loader")
 
 
+def move_loaders(localdir,
+                 loaderdir_os, loaderdir_radio,
+                 zipdir_os, zipdir_radio):
+    """
+    Move autoloaders to zipped and loaders directories in localdir.
+    :param localdir: Local directory, containing files you wish to move.
+    :type localdir: str
+    :param loaderdir_os: Large autoloader .exe destination.
+    :type loaderdir_os: str
+    :param loaderdir_radio: Small autoloader .exe destination.
+    :type loaderdir_radio: str
+    :param zipdir_os: Large autoloader archive destination.
+    :type zipdir_os: str
+    :param zipdir_radio: Small autoloader archive destination.
+    :type zipdir_radio: str
+    """
+    for files in os.listdir(localdir):
+        if files.endswith(
+                          ".exe"
+                          ) and files.startswith(
+                          ("Q10", "Z10", "Z30", "Z3", "Passport")):
+            print("MOVING: " + files)
+            loaderdest_os = os.path.join(loaderdir_os, files)
+            loaderdest_radio = os.path.join(loaderdir_radio, files)
+            # even the fattest radio is less than 90MB
+            if os.path.getsize(os.path.join(localdir, files)) > 90000000:
+                try:
+                    shutil.move(os.path.join(localdir, files), loaderdir_os)
+                except shutil.Error:
+                    os.remove(loaderdest_os)
+            else:
+                try:
+                    shutil.move(os.path.join(localdir, files), loaderdir_radio)
+                except shutil.Error:
+                    os.remove(loaderdest_radio)
+        if files.endswith(
+            (".7z", ".tar.xz", ".tar.bz2", ".tar.gz", ".zip")
+            ) and files.startswith(
+                ("Q10", "Z10", "Z30", "Z3", "Passport")):
+            print("MOVING: " + files)
+            zipdest_os = os.path.join(zipdir_os, files)
+            zipdest_radio = os.path.join(zipdir_radio, files)
+            # even the fattest radio is less than 90MB
+            if os.path.getsize(os.path.join(localdir, files)) > 90000000:
+                try:
+                    shutil.move(os.path.join(localdir, files), zipdir_os)
+                except shutil.Error:
+                    os.remove(zipdest_os)
+            else:
+                try:
+                    shutil.move(os.path.join(localdir, files), zipdir_radio)
+                except shutil.Error:
+                    os.remove(zipdest_radio)
+
+
 def do_magic(osversion, radioversion, softwareversion,
              localdir, radios=True, compressed=True, deleted=True,
              hashed=True, crc32=False, adler32=False,
@@ -1677,41 +1732,9 @@ def do_magic(osversion, radioversion, softwareversion,
 
     # Move zipped/unzipped loaders
     print("\nMOVING...")
-    for files in os.listdir(localdir):
-        if files.endswith(".exe") and files.startswith(
-                ("Q10", "Z10", "Z30", "Z3", "Passport")):
-            print("MOVING: " + files)
-            loaderdest_os = os.path.join(loaderdir_os, files)
-            loaderdest_radio = os.path.join(loaderdir_radio, files)
-            # even the fattest radio is less than 90MB
-            if os.path.getsize(os.path.join(localdir, files)) > 90000000:
-                try:
-                    shutil.move(os.path.join(localdir, files), loaderdir_os)
-                except shutil.Error:
-                    os.remove(loaderdest_os)
-            else:
-                try:
-                    shutil.move(os.path.join(localdir, files), loaderdir_radio)
-                except shutil.Error:
-                    os.remove(loaderdest_radio)
-        if files.endswith(
-            (".7z", ".tar.xz", ".tar.bz2", ".tar.gz", ".zip")
-        ) and files.startswith(
-                ("Q10", "Z10", "Z30", "Z3", "Passport")):
-            print("MOVING: " + files)
-            zipdest_os = os.path.join(zipdir_os, files)
-            zipdest_radio = os.path.join(zipdir_radio, files)
-            # even the fattest radio is less than 90MB
-            if os.path.getsize(os.path.join(localdir, files)) > 90000000:
-                try:
-                    shutil.move(os.path.join(localdir, files), zipdir_os)
-                except shutil.Error:
-                    os.remove(zipdest_os)
-            else:
-                try:
-                    shutil.move(os.path.join(localdir, files), zipdir_radio)
-                except shutil.Error:
-                    os.remove(zipdest_radio)
+    move_loaders(localdir,
+                 loaderdir_os, loaderdir_radio,
+                 zipdir_os, zipdir_radio)
 
     # Get hashes (if specified)
     if hashed:

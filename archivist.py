@@ -19,6 +19,7 @@ import subprocess  # invocation of 7z, cap
 import zlib  # adler32, crc32
 import zipfile  # zip extract, zip compresssion
 import tarfile  # txz/tbz/tgz compression
+import errno  # error symbols
 
 _version = "2015-04-13-A"
 _release = "https://github.com/thurask/archivist/releases/latest"
@@ -729,6 +730,13 @@ def availability(url):
 		else:
 			return False
 
+def removeEmptyFolders(aFolder):
+	try:
+		os.rmdir(aFolder)
+	except OSError as ex:
+		if ex.errno == errno.ENOTEMPTY:
+			pass
+
 # Create autoloaders
 def generateLoaders(osversion, radioversion, radios, cap="cap.exe", localdir=os.getcwd()):
 	# #OS Images
@@ -813,91 +821,91 @@ def generateLoaders(osversion, radioversion, radios, cap="cap.exe", localdir=os.
 	# STL100-1
 	try:
 		print("Creating OMAP Z10 OS...")
-		makeAutoloader(filename="Z10_" + osversion + "_STL100-1.exe", cap, os_ti, radio_z10_ti, folder=localdir)
+		makeAutoloader(filename="Z10_" + osversion + "_STL100-1.exe", cap=cap, firstfile=os_ti, secondfile=radio_z10_ti, folder=localdir)
 	except Exception:
 		print("Could not create STL100-1 OS/radio loader")
 	if radios == True:
 		print("Creating OMAP Z10 radio...")
 		try:
-			makeAutoloader("Z10_" + radioversion + "_STL100-1.exe", cap, radio_z10_ti, folder=localdir)
+			makeAutoloader("Z10_" + radioversion + "_STL100-1.exe", cap=cap, firstfile=radio_z10_ti, folder=localdir)
 		except Exception:
 			print("Could not create STL100-1 radio loader")
 
 	# STL100-X
 	try:
 		print("Creating Qualcomm Z10 OS...")
-		makeAutoloader("Z10_" + osversion + "_STL100-2-3.exe", cap, os_8960, radio_z10_qcm, folder=localdir)
+		makeAutoloader("Z10_" + osversion + "_STL100-2-3.exe", cap=cap, firstfile=os_8960, secondfile=radio_z10_qcm, folder=localdir)
 	except Exception:
 		print("Could not create Qualcomm Z10 OS/radio loader")
 	if radios == True:
 		print("Creating Qualcomm Z10 radio...")
 		try:
-			makeAutoloader("Z10_" + radioversion + "_STL100-2-3.exe", cap, radio_z10_qcm, folder=localdir)
+			makeAutoloader("Z10_" + radioversion + "_STL100-2-3.exe", cap=cap, firstfile=radio_z10_qcm, folder=localdir)
 		except Exception:
 			print("Could not create Qualcomm Z10 radio loader")
 
 	# STL100-4
 	try:
 		print("Creating Verizon Z10 OS...")
-		makeAutoloader("Z10_" + osversion + "_STL100-4.exe", cap, os_8960, radio_z10_vzw, folder=localdir)
+		makeAutoloader("Z10_" + osversion + "_STL100-4.exe", cap=cap, firstfile=os_8960, secondfile=radio_z10_vzw, folder=localdir)
 	except Exception:
 		print("Could not create Verizon Z10 OS/radio loader")
 	if radios == True:
 		print("Creating Verizon Z10 radio...")
 		try:
-			makeAutoloader("Z10_" + radioversion + "_STL100-4.exe", cap, radio_z10_vzw, folder=localdir)
+			makeAutoloader("Z10_" + radioversion + "_STL100-4.exe", cap=cap, firstfile=radio_z10_vzw, folder=localdir)
 		except Exception:
 			print("Could not create Verizon Z10 radio loader")
 
 	# Q10/Q5
 	try:
 		print("Creating Q10/Q5 OS...")
-		makeAutoloader("Q10_" + osversion + "_SQN100-1-2-3-4-5.exe", cap, os_8960, radio_q10, folder=localdir)
+		makeAutoloader("Q10_" + osversion + "_SQN100-1-2-3-4-5.exe", cap=cap, firstfile=os_8960, secondfile=radio_q10, folder=localdir)
 	except Exception:
 		print("Could not create Q10/Q5 OS/radio loader")
 	if radios == True:
 		print("Creating Q10/Q5 radio...")
 		try:
-			makeAutoloader("Q10_" + radioversion + "_SQN100-1-2-3-4-5.exe", cap, radio_q10, folder=localdir)
+			makeAutoloader("Q10_" + radioversion + "_SQN100-1-2-3-4-5.exe", cap=cap, firstfile=radio_q10, folder=localdir)
 		except Exception:
 			print("Could not create Q10/Q5 radio loader")
 
 	# Z30/Classic
 	try:
 		print("Creating Z30/Classic OS...")
-		makeAutoloader("Z30_" + osversion + "_STA100-1-2-3-4-5-6.exe", cap, os_8960, radio_z30, folder=localdir)
+		makeAutoloader("Z30_" + osversion + "_STA100-1-2-3-4-5-6.exe", cap=cap, firstfile=os_8960, secondfile=radio_z30, folder=localdir)
 	except Exception:
 		print("Could not create Z30/Classic OS/radio loader")
 	if radios == True:
 		print("Creating Z30/Classic radio...")
 		try:
-			makeAutoloader("Z30_" + radioversion + "_STA100-1-2-3-4-5-6.exe", cap, radio_z30, folder=localdir)
+			makeAutoloader("Z30_" + radioversion + "_STA100-1-2-3-4-5-6.exe", cap=cap, firstfile=radio_z30, folder=localdir)
 		except Exception:
 			print("Could not create Z30/Classic radio loader")
 
 	# Z3
 	try:
 		print("Creating Z3 OS...")
-		makeAutoloader("Z3_" + osversion + "_STJ100-1-2.exe", cap, os_8x30, radio_z3, folder=localdir)
+		makeAutoloader("Z3_" + osversion + "_STJ100-1-2.exe", cap=cap, firstfile=os_8x30, secondfile=radio_z3, folder=localdir)
 	except Exception:
 		print("Could not create Z3 OS/radio loader (8x30)")
 	if radios == True:
 		print("Creating Z3 radio...")
 		try:
-			makeAutoloader("Z3_" + radioversion + "_STJ100-1-2.exe", cap, radio_z3, folder=localdir)
+			makeAutoloader("Z3_" + radioversion + "_STJ100-1-2.exe", cap=cap, firstfile=radio_z3, folder=localdir)
 		except Exception:
 			print("Could not create Z3 radio loader")
 
 	# Passport	
 	try:
 		print("Creating Passport OS...")
-		makeAutoloader("Passport_" + osversion + "_SQW100-1-2-3.exe", cap, os_8974, radio_8974, folder=localdir)
+		makeAutoloader("Passport_" + osversion + "_SQW100-1-2-3.exe", cap=cap, firstfile=os_8974, secondfile=radio_8974, folder=localdir)
 	except Exception:
 		print("Could not create Passport OS/radio loader")
 	if radios == True:
 		print("Creating Passport radio...")
 		try:
-			makeAutoloader("Passport_" + radioversion + "_SQW100-1-2-3.exe", cap, radio_8974, folder=localdir)
+			makeAutoloader("Passport_" + radioversion + "_SQW100-1-2-3.exe", cap=cap, firstfile=radio_8974, folder=localdir)
 		except Exception:
 			print("Could not create Passport radio loader")
 
@@ -1086,7 +1094,7 @@ def doMagic(osversion, radioversion, softwareversion, localdir, radios=True, com
 					shutil.move(os.path.join(localdir, files), loaderdir_radio)
 				except shutil.Error:
 					os.remove(loaderdest_radio)
-		if files.endswith(".7z") or files.endswith(".tar.xz") or files.endswith(".tar.bz2") or files.endswith(".tar.gz") or files.endswith(".zip"):
+		if (files.endswith(".7z") or files.endswith(".tar.xz") or files.endswith(".tar.bz2") or files.endswith(".tar.gz") or files.endswith(".zip")) and files.startswith("Q10", "Z10", "Z30", "Z3", "Passport"):
 				print("MOVING: " + files)
 				zipdest_os = os.path.join(zipdir_os, files)
 				zipdest_radio = os.path.join(zipdir_radio, files)
@@ -1121,16 +1129,9 @@ def doMagic(osversion, radioversion, softwareversion, localdir, radios=True, com
 		shutil.rmtree(loaderdir)
 	
 	# Delete empty folders
-	if compressed == False:
-		if (not os.listdir(zipdir_os)) and (not os.listdir(zipdir_radio)):
-			shutil.rmtree(zipdir)  # no zipped files if we didn't make them
-	if radios == False:
-		if deleted == False:
-			if not os.listdir(loaderdir_radio):
-				shutil.rmtree(loaderdir_radio)  # we don't want to keep an empty radio dir with our non-empty os dir
-		if compressed == True:
-			if not os.listdir(zipdir_radio):
-				shutil.rmtree(zipdir_radio)  # as above, but for zipped radios
+	dircount = os.walk(localdir)
+	for folder in dircount:
+		removeEmptyFolders(folder)
 
 	print("\nFINISHED!")
 	endtime = time.clock() - starttime

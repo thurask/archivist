@@ -19,7 +19,6 @@ import subprocess  # invocation of 7z, cap
 import zlib  # adler32, crc32
 import zipfile  # zip extract, zip compresssion
 import tarfile  # txz/tbz/tgz compression
-import errno  # error symbols
 
 _version = "2015-04-13-A"
 _release = "https://github.com/thurask/archivist/releases/latest"
@@ -731,11 +730,9 @@ def availability(url):
 			return False
 
 def removeEmptyFolders(aFolder):
-	try:
-		os.rmdir(aFolder)
-	except OSError as ex:
-		if ex.errno == errno.ENOTEMPTY:
-			pass
+	for curdir, subdirs, files in os.walk(aFolder):
+		if len(subdirs) == 0 and len(files) == 0: #no files or subdirs
+			os.rmdir(curdir) #delete the directory
 
 # Create autoloaders
 def generateLoaders(osversion, radioversion, radios, cap="cap.exe", localdir=os.getcwd()):
@@ -1094,7 +1091,7 @@ def doMagic(osversion, radioversion, softwareversion, localdir, radios=True, com
 					shutil.move(os.path.join(localdir, files), loaderdir_radio)
 				except shutil.Error:
 					os.remove(loaderdest_radio)
-		if (files.endswith(".7z") or files.endswith(".tar.xz") or files.endswith(".tar.bz2") or files.endswith(".tar.gz") or files.endswith(".zip")) and files.startswith("Q10", "Z10", "Z30", "Z3", "Passport"):
+		if files.endswith((".7z", ".tar.xz", ".tar.bz2", ".tar.gz", ".zip")) and files.startswith(("Q10", "Z10", "Z30", "Z3", "Passport")):
 				print("MOVING: " + files)
 				zipdest_os = os.path.join(zipdir_os, files)
 				zipdest_radio = os.path.join(zipdir_radio, files)
@@ -1129,9 +1126,9 @@ def doMagic(osversion, radioversion, softwareversion, localdir, radios=True, com
 		shutil.rmtree(loaderdir)
 	
 	# Delete empty folders
-	dircount = os.walk(localdir)
-	for folder in dircount:
-		removeEmptyFolders(folder)
+	print("\nREMOVING EMPTY FOLDERS...")
+	removeEmptyFolders(localdir) # run once to get rid of empty OS/radio subfolders
+	removeEmptyFolders(localdir) # run twice to get rid of empty os/bar/zipped folders
 
 	print("\nFINISHED!")
 	endtime = time.clock() - starttime

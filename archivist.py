@@ -813,7 +813,7 @@ def generateLoaders(osversion, radioversion, radios, cap="cap.exe", localdir=os.
 	# STL100-1
 	try:
 		print("Creating OMAP Z10 OS...")
-		makeAutoloader(filename="Z10_" + osversion + "_STL100-1.exe", cap=cap, firstfile=os_ti, secondfile=radio_z10_ti, thirdfile="", fourthfile="", fifthfile="", sixthfile="", folder=localdir)
+		makeAutoloader(filename="Z10_" + osversion + "_STL100-1.exe", cap, os_ti, radio_z10_ti, folder=localdir)
 	except Exception:
 		print("Could not create STL100-1 OS/radio loader")
 	if radios == True:
@@ -974,11 +974,12 @@ def doMagic(osversion, radioversion, softwareversion, localdir, radios=True, com
 		radiodict[str(i)] = i
 		
 	# Check availability of software release
+	print("\nCHECKING SOFTWARE RELEASE AVAILABILITY...")
 	av = availability(baseurl)
 	if(av == True):
-		print("\nSOFTWARE RELEASE", softwareversion, "EXISTS")
+		print("SOFTWARE RELEASE", softwareversion, "EXISTS")
 	else:
-		print("\nSOFTWARE RELEASE", softwareversion, "NOT FOUND")
+		print("SOFTWARE RELEASE", softwareversion, "NOT FOUND")
 		cont = str2bool(input("CONTINUE? Y/N "))
 		if (cont == True):
 			pass

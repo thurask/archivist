@@ -30,8 +30,6 @@ import pseudocap  # implement cap.exe
 
 _version = "2015-04-14-B"
 _release = "https://github.com/thurask/archivist/releases/latest"
-_updatesite = """https://raw.githubusercontent.com/thurask/\
-thurask.github.io/master/archivist.version"""
 
 
 def update_check(version):
@@ -41,7 +39,8 @@ def update_check(version):
     :type version: str
     """
     update = False
-    updatesite = _updatesite
+    updatesite = """https://raw.githubusercontent.com/thurask/\
+thurask.github.io/master/archivist.version"""
     print("LOCAL VERSION:", version)
     # silence warnings about no SSL
     urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
@@ -551,7 +550,7 @@ def generate_loaders(
     # STL100-1
     try:
         print("Creating OMAP Z10 OS...")
-        pseudocap.make_autoloader(
+        pseudocap.make_autoloader(  # @UndefinedVariable, since PyDev is dumb
             filename="Z10_" +
             osversion +
             "_STL100-1.exe",
@@ -732,56 +731,68 @@ def generate_loaders(
 
 
 def move_loaders(localdir,
-                 loaderdir_os, loaderdir_radio,
-                 zipdir_os, zipdir_radio):
+                 exedir_os, exedir_rad,
+                 zipdir_os, zipdir_rad):
     """
     Move autoloaders to zipped and loaders directories in localdir.
     :param localdir: Local directory, containing files you wish to move.
     :type localdir: str
-    :param loaderdir_os: Large autoloader .exe destination.
-    :type loaderdir_os: str
-    :param loaderdir_radio: Small autoloader .exe destination.
-    :type loaderdir_radio: str
+    :param exedir_os: Large autoloader .exe destination.
+    :type exedir_os: str
+    :param exedir_rad: Small autoloader .exe destination.
+    :type exedir_rad: str
     :param zipdir_os: Large autoloader archive destination.
     :type zipdir_os: str
-    :param zipdir_radio: Small autoloader archive destination.
-    :type zipdir_radio: str
+    :param zipdir_rad: Small autoloader archive destination.
+    :type zipdir_rad: str
     """
     for files in os.listdir(localdir):
         if files.endswith(".exe") and files.startswith(
                 ("Q10", "Z10", "Z30", "Z3", "Passport")):
             print("MOVING: " + files)
-            loaderdest_os = os.path.join(loaderdir_os, files)
-            loaderdest_radio = os.path.join(loaderdir_radio, files)
+            exedest_os = os.path.join(exedir_os, files)
+            exedest_rad = os.path.join(exedir_rad, files)
             # even the fattest radio is less than 90MB
             if os.path.getsize(os.path.join(localdir, files)) > 90000000:
-                try:
-                    shutil.move(os.path.join(localdir, files), loaderdir_os)
-                except shutil.Error:
-                    os.remove(loaderdest_os)
+                while True:
+                    try:
+                        shutil.move(os.path.join(localdir, files), exedir_os)
+                    except shutil.Error:
+                        os.remove(exedest_os)
+                        continue
+                    break
             else:
-                try:
-                    shutil.move(os.path.join(localdir, files), loaderdir_radio)
-                except shutil.Error:
-                    os.remove(loaderdest_radio)
+                while True:
+                    try:
+                        shutil.move(os.path.join(localdir, files), exedir_rad)
+                    except shutil.Error:
+                        os.remove(exedest_rad)
+                        continue
+                    break
         if files.endswith(
             (".7z", ".tar.xz", ".tar.bz2", ".tar.gz", ".zip")
         ) and files.startswith(
                 ("Q10", "Z10", "Z30", "Z3", "Passport")):
             print("MOVING: " + files)
             zipdest_os = os.path.join(zipdir_os, files)
-            zipdest_radio = os.path.join(zipdir_radio, files)
+            zipdest_rad = os.path.join(zipdir_rad, files)
             # even the fattest radio is less than 90MB
             if os.path.getsize(os.path.join(localdir, files)) > 90000000:
-                try:
-                    shutil.move(os.path.join(localdir, files), zipdir_os)
-                except shutil.Error:
-                    os.remove(zipdest_os)
+                while True:
+                    try:
+                        shutil.move(os.path.join(localdir, files), zipdir_os)
+                    except shutil.Error:
+                        os.remove(zipdest_os)
+                        continue
+                    break
             else:
-                try:
-                    shutil.move(os.path.join(localdir, files), zipdir_radio)
-                except shutil.Error:
-                    os.remove(zipdest_radio)
+                while True:
+                    try:
+                        shutil.move(os.path.join(localdir, files), zipdir_rad)
+                    except shutil.Error:
+                        os.remove(zipdest_rad)
+                        continue
+                    break
 
 
 def do_magic(osversion, radioversion, softwareversion,
@@ -1162,7 +1173,7 @@ if __name__ == '__main__':
             help="Path to cap.exe",
             default=os.path.join(
                 os.getcwd(),
-                "cap.exe"),
+                "cap-"+pseudocap._capversion+".dat"),
             metavar="PATH")
         negategroup = parser.add_argument_group(
             "negators",
@@ -1344,5 +1355,5 @@ if __name__ == '__main__':
                  localdir, radios, compressed, deleted, hashed,
                  False, False, True, False, False,
                  False, False, True, False, False,
-                 "cap.exe", True, True, True, True, "7z")
+                 "cap-3.11.0.18.dat", True, True, True, True, "7z")
     smeg = input("Press Enter to exit")

@@ -154,8 +154,7 @@ F514F514F534E464D514E4947514E51474F70709CD5C5979CD5C5979CD5C597""")
         file.write(trailers)
 
 
-def make_autoloader(filename, cap,
-                    firstfile, secondfile="", thirdfile="",
+def make_autoloader(filename, cap, firstfile, secondfile="", thirdfile="",
                     fourthfile="", fifthfile="", sixthfile="",
                     folder=os.getcwd()):
     """

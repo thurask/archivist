@@ -13,7 +13,11 @@ buildOptions = dict(packages=[],
     excludes=[],
     include_msvcr=[True],
     build_exe="archivist",
-    zip_includes=[])
+    zip_includes=[
+    join(localdir, "filehashtools.py"),
+    join(localdir, "pseudocap.py"),
+    join(localdir, "filters.py")
+])
 
 base = 'Console'
 
@@ -21,7 +25,7 @@ executables = [
     Executable('archivist.py',
                base=base,
                appendScriptToExe=True,
-               appendScriptToLibrary=False)
+               appendScriptToLibrary=True)
 ]
 
 setup(name='archivist',
@@ -33,4 +37,4 @@ setup(name='archivist',
 
 
 # # TO BUILD:
-# # >python setup.py build_exe
+# # >python cxsetup.py build_exe

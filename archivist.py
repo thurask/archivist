@@ -22,716 +22,16 @@ import binascii  # downloader thread naming
 import math  # rounding of floats
 import webbrowser  # invoke browser if update is there
 import subprocess  # invocation of 7z, cap
-import zlib  # adler32, crc32
 import zipfile  # zip extract, zip compresssion
 import tarfile  # txz/tbz/tgz compression
+import filters  # filters for cmd args
+import filehashtools  # file hashing
+import pseudocap  # implement cap.exe
 
 _version = "2015-04-14-B"
 _release = "https://github.com/thurask/archivist/releases/latest"
 _updatesite = """https://raw.githubusercontent.com/thurask/\
 thurask.github.io/master/archivist.version"""
-_capversion = "3.11.0.18"
-
-
-def crc32hash(filepath, blocksize=16 * 1024 * 1024):
-    """
-    Return CRC32 checksum of a file.
-    :param filepath: File you wish to verify.
-    :type filepath: str
-    :param blocksize: File read chunk size;
-    how much of it to load into memory at a time.
-    :type blocksize: int
-    """
-    seed = 0
-    with open(filepath, 'rb') as f:
-        for chunk in iter(lambda: f.read(1024), b''):
-            seed = zlib.crc32(chunk, seed)
-    final = format(seed & 0xFFFFFFFF, "x")
-    return final
-
-
-def adler32hash(filepath, blocksize=16 * 1024 * 1024):
-    """
-    Return Adler32 checksum of a file.
-    :param filepath: File you wish to verify.
-    :type filepath: str
-    :param blocksize: File read chunk size;
-    how much of it to load into memory at a time.
-    :type blocksize: int
-    """
-    asum = 1
-    with open(filepath, 'rb') as f:
-        while True:
-            data = f.read(blocksize)
-            if not data:
-                break
-            asum = zlib.adler32(data, asum)
-            if asum < 0:
-                asum += 2 ** 32
-    final = format(asum & 0xFFFFFFFF, "x")
-    return final
-
-
-def sha1hash(filepath, blocksize=16 * 1024 * 1024):
-    """
-    Return SHA-1 hash of a file.
-    :param filepath: File you wish to verify.
-    :type filepath: str
-    :param blocksize: File read chunk size;
-    how much of it to load into memory at a time.
-    :type blocksize: int
-    """
-    sha1 = hashlib.sha1()
-    f = open(filepath, 'rb')
-    try:
-        while True:
-            data = f.read(blocksize)
-            if not data:
-                break
-            sha1.update(data)
-    finally:
-        f.close()
-    return sha1.hexdigest()
-
-
-def sha224hash(filepath, blocksize=16 * 1024 * 1024):
-    """
-    Return SHA-224 hash of a file.
-    :param filepath: File you wish to verify.
-    :type filepath: str
-    :param blocksize: File read chunk size;
-    how much of it to load into memory at a time.
-    :type blocksize: int
-    """
-    sha224 = hashlib.sha224()
-    f = open(filepath, 'rb')
-    try:
-        while True:
-            data = f.read(blocksize)
-            if not data:
-                break
-            sha224.update(data)
-    finally:
-        f.close()
-    return sha224.hexdigest()
-
-
-def sha256hash(filepath, blocksize=16 * 1024 * 1024):
-    """
-    Return SHA-256 hash of a file.
-    :param filepath: File you wish to verify.
-    :type filepath: str
-    :param blocksize: File read chunk size;
-    how much of it to load into memory at a time.
-    :type blocksize: int
-    """
-    sha256 = hashlib.sha256()
-    f = open(filepath, 'rb')
-    try:
-        while True:
-            data = f.read(blocksize)
-            if not data:
-                break
-            sha256.update(data)
-    finally:
-        f.close()
-    return sha256.hexdigest()
-
-
-def sha384hash(filepath, blocksize=16 * 1024 * 1024):
-    """
-    Return SHA-384 hash of a file.
-    :param filepath: File you wish to verify.
-    :type filepath: str
-    :param blocksize: File read chunk size;
-    how much of it to load into memory at a time.
-    :type blocksize: int
-    """
-    sha384 = hashlib.sha384()
-    f = open(filepath, 'rb')
-    try:
-        while True:
-            data = f.read(blocksize)
-            if not data:
-                break
-            sha384.update(data)
-    finally:
-        f.close()
-    return sha384.hexdigest()
-
-
-def sha512hash(filepath, blocksize=16 * 1024 * 1024):
-    """
-    Return SHA-512 hash of a file.
-    :param filepath: File you wish to verify.
-    :type filepath: str
-    :param blocksize: File read chunk size;
-    how much of it to load into memory at a time.
-    :type blocksize: int
-    """
-    sha512 = hashlib.sha512()
-    f = open(filepath, 'rb')
-    try:
-        while True:
-            data = f.read(blocksize)
-            if not data:
-                break
-            sha512.update(data)
-    finally:
-        f.close()
-    return sha512.hexdigest()
-
-
-def md4hash(filepath, blocksize=16 * 1024 * 1024):
-    """
-    Return MD4 hash of a file; depends on system SSL library.
-    :param filepath: File you wish to verify.
-    :type filepath: str
-    :param blocksize: File read chunk size;
-    how much of it to load into memory at a time.
-    :type blocksize: int
-    """
-    try:
-        md4 = hashlib.new('md4')
-        f = open(filepath, 'rb')
-        try:
-            while True:
-                data = f.read(blocksize)
-                if not data:
-                    break
-                md4.update(data)
-        finally:
-            f.close()
-        return md4.hexdigest()
-    except Exception:
-        print("MD4 HASH FAILED:\nIS IT AVAILABLE?")
-
-
-def md5hash(filepath, blocksize=16 * 1024 * 1024):
-    """
-    Return MD5 hash of a file.
-    :param filepath: File you wish to verify.
-    :type filepath: str
-    :param blocksize: File read chunk size;
-    how much of it to load into memory at a time.
-    :type blocksize: int
-    """
-    md5 = hashlib.md5()
-    f = open(filepath, 'rb')
-    try:
-        while True:
-            data = f.read(blocksize)
-            if not data:
-                break
-            md5.update(data)
-    finally:
-        f.close()
-    return md5.hexdigest()
-
-
-def ripemd160hash(filepath, blocksize=16 * 1024 * 1024):
-    """
-    Return RIPEMD160 hash of a file; depends on system SSL library.
-    :param filepath: File you wish to verify.
-    :type filepath: str
-    :param blocksize: File read chunk size;
-    how much of it to load into memory at a time.
-    :type blocksize: int
-    """
-    try:
-        r160 = hashlib.new('ripemd160')
-        f = open(filepath, 'rb')
-        try:
-            while True:
-                data = f.read(blocksize)
-                if not data:
-                    break
-                r160.update(data)
-        finally:
-            f.close()
-        return r160.hexdigest()
-    except Exception:
-        print("RIPEMD160 HASH FAILED:\nIS IT AVAILABLE?")
-
-
-def verifier(workingdir, blocksize=16 * 1024 * 1024,
-             crc32=False, adler32=False,
-             sha1=True, sha224=False, sha256=False,
-             sha384=False, sha512=False, md5=True, md4=False, ripemd160=False):
-    """
-    For all files in a directory, perform various hash/checksum functions.
-    on them based on boolean arguments, writing the output to a .cksum file.
-    :param workingdir: Path you wish to verify.
-    :type workingdir: str
-    :param blocksize: File read chunk size;
-    how much of it to load into memory at a time.
-    :type blocksize: int
-    :param crc32: Whether to use CRC32. False by default.
-    :type crc32: bool
-    :param adler32: Whether to use Adler-32. False by default.
-    :type adler32: bool
-    :param sha1: Whether to use SHA-1. True by default.
-    :type sha1: bool
-    :param sha224: Whether to use SHA-224. False by default.
-    :type sha224: bool
-    :param sha256: Whether to use SHA-256. False by default.
-    :type sha256: bool
-    :param sha384: Whether to use SHA-384. False by default.
-    :type sha384: bool
-    :param sha512: Whether to use SHA-512. False by default.
-    :type sha512: bool
-    :param md5: Whether to use MD5. True by default.
-    :type md5: bool
-    :param md4: Whether to use MD4. False by default. Dependent on
-    system OpenSSL implementation (not in stdlib).
-    :type md4: bool
-    :param ripemd160: Whether to use RIPEMD160. False by default. Dependent on
-    system OpenSSL implementation (not in stdlib).
-    :type ripemd160: bool
-    """
-    target = open(os.path.join(workingdir, 'all.cksum'), 'w')
-    hashoutput_crc32 = "CRC32\n"
-    hashoutput_adler32 = "ADLER32\n"
-    hashoutput_sha1 = "SHA1\n"
-    hashoutput_sha224 = "SHA224\n"
-    hashoutput_sha256 = "SHA256\n"
-    hashoutput_sha384 = "SHA384\n"
-    hashoutput_sha512 = "SHA512\n"
-    hashoutput_md5 = "MD5\n"
-    hashoutput_md4 = "MD4\n"
-    hashoutput_ripemd160 = "RIPEMD160\n"
-    for file in os.listdir(workingdir):
-        if os.path.isdir(os.path.join(workingdir, file)):
-            pass  # exclude folders
-        elif file.endswith(".cksum"):
-            pass  # exclude already generated files
-        else:
-            if adler32:
-                print("Adler32:", str(file))
-                result_adler32 = adler32hash(
-                    os.path.join(
-                        workingdir,
-                        file),
-                    blocksize)
-                hashoutput_adler32 += str(result_adler32.upper())
-                hashoutput_adler32 += " "
-                hashoutput_adler32 += str(file)
-                hashoutput_adler32 += " \n"
-            if crc32:
-                print("CRC32:", str(file))
-                result_crc32 = crc32hash(
-                    os.path.join(
-                        workingdir,
-                        file),
-                    blocksize)
-                hashoutput_crc32 += str(result_crc32.upper())
-                hashoutput_crc32 += " "
-                hashoutput_crc32 += str(file)
-                hashoutput_crc32 += " \n"
-            if md4:
-                print("MD4:", str(file))
-                result_md4 = md4hash(
-                    os.path.join(
-                        workingdir,
-                        file),
-                    blocksize)
-                hashoutput_md4 += str(result_md4.upper())
-                hashoutput_md4 += " "
-                hashoutput_md4 += str(file)
-                hashoutput_md4 += " \n"
-            if md5:
-                print("MD5:", str(file))
-                result_md5 = md5hash(
-                    os.path.join(
-                        workingdir,
-                        file),
-                    blocksize)
-                hashoutput_md5 += str(result_md5.upper())
-                hashoutput_md5 += " "
-                hashoutput_md5 += str(file)
-                hashoutput_md5 += " \n"
-            if sha1:
-                print("SHA1:", str(file))
-                result_sha1 = sha1hash(
-                    os.path.join(
-                        workingdir,
-                        file),
-                    blocksize)
-                hashoutput_sha1 += str(result_sha1.upper())
-                hashoutput_sha1 += " "
-                hashoutput_sha1 += str(file)
-                hashoutput_sha1 += " \n"
-            if sha224:
-                print("SHA224:", str(file))
-                result_sha224 = sha224hash(
-                    os.path.join(
-                        workingdir,
-                        file),
-                    blocksize)
-                hashoutput_sha224 += str(result_sha224.upper())
-                hashoutput_sha224 += " "
-                hashoutput_sha224 += str(file)
-                hashoutput_sha224 += " \n"
-            if sha256:
-                print("SHA256:", str(file))
-                result_sha256 = sha256hash(
-                    os.path.join(
-                        workingdir,
-                        file),
-                    blocksize)
-                hashoutput_sha256 += str(result_sha256.upper())
-                hashoutput_sha256 += " "
-                hashoutput_sha256 += str(file)
-                hashoutput_sha256 += " \n"
-            if sha384:
-                print("SHA384:", str(file))
-                result_sha384 = sha384hash(
-                    os.path.join(
-                        workingdir,
-                        file),
-                    blocksize)
-                hashoutput_sha384 += str(result_sha384.upper())
-                hashoutput_sha384 += " "
-                hashoutput_sha384 += str(file)
-                hashoutput_sha384 += " \n"
-            if sha512:
-                print("SHA512:", str(file))
-                result_sha512 = sha512hash(
-                    os.path.join(
-                        workingdir,
-                        file),
-                    blocksize)
-                hashoutput_sha512 += str(result_sha512.upper())
-                hashoutput_sha512 += " "
-                hashoutput_sha512 += str(file)
-                hashoutput_sha512 += " \n"
-            if ripemd160:
-                print("RIPEMD160:", str(file))
-                result_ripemd160 = ripemd160hash(
-                    os.path.join(
-                        workingdir,
-                        file),
-                    blocksize)
-                hashoutput_ripemd160 += str(result_ripemd160.upper())
-                hashoutput_ripemd160 += " "
-                hashoutput_ripemd160 += str(file)
-                hashoutput_ripemd160 += " \n"
-            print("\n")
-    if adler32:
-        target.write(hashoutput_adler32 + "\n")
-    if crc32:
-        target.write(hashoutput_crc32 + "\n")
-    if md4:
-        target.write(hashoutput_md4 + "\n")
-    if md5:
-        target.write(hashoutput_md5 + "\n")
-    if sha1:
-        target.write(hashoutput_sha1 + "\n")
-    if sha224:
-        target.write(hashoutput_sha224 + "\n")
-    if sha256:
-        target.write(hashoutput_sha256 + "\n")
-    if sha384:
-        target.write(hashoutput_sha384 + "\n")
-    if sha512:
-        target.write(hashoutput_sha512 + "\n")
-    if ripemd160:
-        target.write(hashoutput_ripemd160 + "\n")
-    target.close()
-
-
-def ghetto_convert(intsize):
-    """
-    Convert from decimal integer to little endian
-    hexadecimal string, padded to 16 characters with zeros.
-    :param intsize: Integer you wish to convert.
-    :type intsize: integer
-    """
-    hexsize = format(intsize, '08x')  # '00AABBCC'
-    newlist = [hexsize[i:i + 2]
-               for i in range(0, len(hexsize), 2)]  # ['00', 'AA','BB','CC']
-    while "00" in newlist:
-        newlist.remove("00")  # extra padding
-    newlist.reverse()
-    ghetto_hex = "".join(newlist)  # 'CCBBAA'
-    ghetto_hex = ghetto_hex.rjust(16, '0')
-    return binascii.unhexlify(bytes(ghetto_hex.upper(), 'ascii'))
-
-
-def make_offset(cap, firstfile, secondfile="", thirdfile="",
-                fourthfile="", fifthfile="", sixthfile="", folder=os.getcwd()):
-    """
-    Create magic offset file for use in autoloader creation.
-    Cap.exe MUST match separator version.
-    Defined in _capversion.
-    :param cap: Location of cap.exe file.
-    :type cap: str
-    :param firstfile: First signed file. Required.
-    :type firstfile: str
-    :param secondfile: Second signed file. Optional.
-    :type secondfile: str
-    :param thirdfile: Third signed file. Optional.
-    :type thirdfile: str
-    :param fourthfile: Fourth signed file. Optional.
-    :type fourthfile: str
-    :param fifthfile: Fifth signed file. Optional.
-    :type fifthfile: str
-    :param sixthfile: Sixth signed file. Optional.
-    :type sixthfile: str
-    :param folder: Working folder. Optional.
-    :type folder: str
-    """
-    filecount = 0
-    filelist = [
-        firstfile,
-        secondfile,
-        thirdfile,
-        fourthfile,
-        fifthfile,
-        sixthfile]
-    for i in filelist:
-        if i:
-            filecount += 1
-    # immutable things
-    separator = binascii.unhexlify(
-        """6ADF5D144E4B4D4E474F46464D4E532B170A0D1E0C14532B372A2D3E2C34522F3C534F514\
-F514F514F534E464D514E4947514E51474F70709CD5C5979CD5C5979CD5C597""")
-    password = binascii.unhexlify("0" * 160)
-    singlepad = binascii.unhexlify("0" * 2)
-    doublepad = binascii.unhexlify("0" * 4)
-    signedpad = binascii.unhexlify("0" * 16)
-    filepad = binascii.unhexlify(
-        bytes(
-            str(filecount).rjust(
-                2,
-                '0'),
-            'ascii'))  # between 01 and 06
-    trailermax = int(7 - int(filecount))
-    trailermax = trailermax * 2
-    trailer = "0" * trailermax  # 00 repeated between 1 and 6 times
-    trailers = binascii.unhexlify(trailer)
-
-    capfile = str(glob.glob(cap)[0])
-    capsize = os.path.getsize(capfile)  # size of cap.exe, in bytes
-
-    first = str(glob.glob(firstfile)[0])
-    firstsize = os.path.getsize(first)  # required
-    if (filecount >= 2):
-        second = str(glob.glob(secondfile)[0])
-        secondsize = os.path.getsize(second)
-    if (filecount >= 3):
-        third = str(glob.glob(thirdfile)[0])
-        thirdsize = os.path.getsize(third)
-    if (filecount >= 4):
-        fourth = str(glob.glob(fourthfile)[0])
-        fourthsize = os.path.getsize(fourth)
-    if (filecount >= 5):
-        fifth = str(glob.glob(fifthfile)[0])
-        fifthsize = os.path.getsize(fifth)
-
-    # start of first file; length of cap + length of offset
-    firstoffset = len(separator) + len(password) + 64 + capsize
-    firststart = ghetto_convert(firstoffset)
-    if (filecount >= 2):
-        secondoffset = firstoffset + firstsize  # start of second file
-        secondstart = ghetto_convert(secondoffset)
-    if (filecount >= 3):
-        thirdoffset = secondstart + secondsize  # start of third file
-        thirdstart = ghetto_convert(thirdoffset)
-    if (filecount >= 4):
-        fourthoffset = thirdoffset + thirdsize  # start of fourth file
-        fourthstart = ghetto_convert(fourthoffset)
-    if (filecount >= 5):
-        fifthoffset = fourthstart + fourthsize  # start of fifth file
-        fifthstart = ghetto_convert(fifthoffset)
-    if (filecount == 6):
-        sixthoffset = fifthoffset + fifthsize  # start of sixth file
-        sixthstart = ghetto_convert(sixthoffset)
-
-    with open(os.path.join(folder, "offset.hex"), "w+b") as file:
-        file.write(separator)
-        file.write(password)
-        file.write(filepad)
-        file.write(doublepad)
-        file.write(firststart)
-        file.write(singlepad)
-        if (filecount >= 2):
-            file.write(secondstart)
-        else:
-            file.write(signedpad)
-        file.write(singlepad)
-        if (filecount >= 3):
-            file.write(thirdstart)
-        else:
-            file.write(signedpad)
-        file.write(singlepad)
-        if (filecount >= 4):
-            file.write(fourthstart)
-        else:
-            file.write(signedpad)
-        file.write(singlepad)
-        if (filecount >= 5):
-            file.write(fifthstart)
-        else:
-            file.write(signedpad)
-        file.write(singlepad)
-        if (filecount == 6):
-            file.write(sixthstart)
-        else:
-            file.write(signedpad)
-        file.write(singlepad)
-        file.write(doublepad)
-        file.write(trailers)
-
-
-def make_autoloader(filename, cap,
-                    firstfile, secondfile="", thirdfile="",
-                    fourthfile="", fifthfile="", sixthfile="",
-                    folder=os.getcwd()):
-    """
-    Python implementation of cap.exe.
-    Writes cap.exe, magic offset, signed files to a .exe file.
-    Uses output of make_offset().
-    :param filename: Name of autoloader.
-    :type filename: str
-    :param cap: Location of cap.exe file.
-    :type cap: str
-    :param firstfile: First signed file. Required.
-    :type firstfile: str
-    :param secondfile: Second signed file. Optional.
-    :type secondfile: str
-    :param thirdfile: Third signed file. Optional.
-    :type thirdfile: str
-    :param fourthfile: Fourth signed file. Optional.
-    :type fourthfile: str
-    :param fifthfile: Fifth signed file. Optional.
-    :type fifthfile: str
-    :param sixthfile: Sixth signed file. Optional.
-    :type sixthfile: str
-    :param folder: Working folder. Optional.
-    :type folder: str
-    """
-    make_offset(
-        cap,
-        firstfile,
-        secondfile,
-        thirdfile,
-        fourthfile,
-        fifthfile,
-        sixthfile,
-        folder)
-
-    filecount = 0
-    filelist = [
-        firstfile,
-        secondfile,
-        thirdfile,
-        fourthfile,
-        fifthfile,
-        sixthfile]
-    for i in filelist:
-        if i:
-            filecount += 1
-    try:
-        with open(os.path.join(os.path.abspath(folder),
-                               filename), "wb") as autoloader:
-            try:
-                with open(os.path.normpath(cap), "rb") as capfile:
-                    print("WRITING CAP VERSION", _capversion + "...")
-                    while True:
-                        chunk = capfile.read(4096)  # 4k chunks
-                        if not chunk:
-                            break
-                        autoloader.write(chunk)
-            except IOError as e:
-                print("Operation failed:", e.strerror)
-            try:
-                with open(os.path.join(folder, "offset.hex"), "rb") as offset:
-                    print("WRITING MAGIC OFFSET...")
-                    autoloader.write(offset.read())
-            except IOError as e:
-                print("Operation failed:", e.strerror)
-            try:
-                with open(firstfile, "rb") as first:
-                    print("WRITING SIGNED FILE #1...\n", firstfile)
-                    while True:
-                        chunk = first.read(4096)  # 4k chunks
-                        if not chunk:
-                            break
-                        autoloader.write(chunk)
-            except IOError as e:
-                print("Operation failed:", e.strerror)
-            if (filecount >= 2):
-                try:
-                    print("WRITING SIGNED FILE #2...\n", secondfile)
-                    with open(secondfile, "rb") as second:
-                        while True:
-                            chunk = second.read(4096)  # 4k chunks
-                            if not chunk:
-                                break
-                            autoloader.write(chunk)
-                except IOError as e:
-                    print("Operation failed:", e.strerror)
-            if (filecount >= 3):
-                try:
-                    print("WRITING SIGNED FILE #3...\n", thirdfile)
-                    with open(thirdfile, "rb") as third:
-                        while True:
-                            chunk = third.read(4096)  # 4k chunks
-                            if not chunk:
-                                break
-                            autoloader.write(chunk)
-                except IOError as e:
-                    print("Operation failed:", e.strerror)
-            if (filecount >= 4):
-                try:
-                    print("WRITING SIGNED FILE #5...\n", fourthfile)
-                    with open(fourthfile, "rb") as fourth:
-                        while True:
-                            chunk = fourth.read(4096)  # 4k chunks
-                            if not chunk:
-                                break
-                            autoloader.write(chunk)
-                except IOError as e:
-                    print("Operation failed:", e.strerror)
-            if (filecount >= 5):
-                try:
-                    print("WRITING SIGNED FILE #5...\n", fifthfile)
-                    with open(fifthfile, "rb") as fifth:
-                        while True:
-                            chunk = fifth.read(4096)  # 4k chunks
-                            if not chunk:
-                                break
-                            autoloader.write(chunk)
-                except IOError as e:
-                    print("Operation failed:", e.strerror)
-            if (filecount == 6):
-                try:
-                    print("WRITING SIGNED FILE #6...\n", sixthfile)
-                    with open(sixthfile, "rb") as sixth:
-                        while True:
-                            chunk = sixth.read(4096)  # 4k chunks
-                            if not chunk:
-                                break
-                            autoloader.write(chunk)
-                except IOError as e:
-                    print("Operation failed:", e.strerror)
-    except IOError as e:
-        print("Operation failed:", e.strerror)
-
-    print(filename, "FINISHED!\n")
-    os.remove(os.path.join(folder, "offset.hex"))
-
-
-def file_exists(file):
-    """
-    Check if file exists. Used for parsing file inputs from command line.
-    :param file: \\path\\to\\file.ext
-    :type file: str
-    """
-    if not os.path.exists(file):
-        raise argparse.ArgumentError("{0} does not exist".format(file))
-    return file
 
 
 def update_check(version):
@@ -1251,7 +551,7 @@ def generate_loaders(
     # STL100-1
     try:
         print("Creating OMAP Z10 OS...")
-        make_autoloader(
+        pseudocap.make_autoloader(
             filename="Z10_" +
             osversion +
             "_STL100-1.exe",
@@ -1264,7 +564,7 @@ def generate_loaders(
     if radios:
         print("Creating OMAP Z10 radio...")
         try:
-            make_autoloader(
+            pseudocap.make_autoloader(
                 "Z10_" +
                 radioversion +
                 "_STL100-1.exe",
@@ -1277,7 +577,7 @@ def generate_loaders(
     # STL100-X
     try:
         print("Creating Qualcomm Z10 OS...")
-        make_autoloader(
+        pseudocap.make_autoloader(
             "Z10_" +
             osversion +
             "_STL100-2-3.exe",
@@ -1290,7 +590,7 @@ def generate_loaders(
     if radios:
         print("Creating Qualcomm Z10 radio...")
         try:
-            make_autoloader(
+            pseudocap.make_autoloader(
                 "Z10_" +
                 radioversion +
                 "_STL100-2-3.exe",
@@ -1303,7 +603,7 @@ def generate_loaders(
     # STL100-4
     try:
         print("Creating Verizon Z10 OS...")
-        make_autoloader(
+        pseudocap.make_autoloader(
             "Z10_" +
             osversion +
             "_STL100-4.exe",
@@ -1316,7 +616,7 @@ def generate_loaders(
     if radios:
         print("Creating Verizon Z10 radio...")
         try:
-            make_autoloader(
+            pseudocap.make_autoloader(
                 "Z10_" +
                 radioversion +
                 "_STL100-4.exe",
@@ -1329,7 +629,7 @@ def generate_loaders(
     # Q10/Q5
     try:
         print("Creating Q10/Q5 OS...")
-        make_autoloader(
+        pseudocap.make_autoloader(
             "Q10_" +
             osversion +
             "_SQN100-1-2-3-4-5.exe",
@@ -1342,7 +642,7 @@ def generate_loaders(
     if radios:
         print("Creating Q10/Q5 radio...")
         try:
-            make_autoloader(
+            pseudocap.make_autoloader(
                 "Q10_" +
                 radioversion +
                 "_SQN100-1-2-3-4-5.exe",
@@ -1355,7 +655,7 @@ def generate_loaders(
     # Z30/Classic
     try:
         print("Creating Z30/Classic OS...")
-        make_autoloader(
+        pseudocap.make_autoloader(
             "Z30_" +
             osversion +
             "_STA100-1-2-3-4-5-6.exe",
@@ -1368,7 +668,7 @@ def generate_loaders(
     if radios:
         print("Creating Z30/Classic radio...")
         try:
-            make_autoloader(
+            pseudocap.make_autoloader(
                 "Z30_" +
                 radioversion +
                 "_STA100-1-2-3-4-5-6.exe",
@@ -1381,7 +681,7 @@ def generate_loaders(
     # Z3
     try:
         print("Creating Z3 OS...")
-        make_autoloader(
+        pseudocap.make_autoloader(
             "Z3_" +
             osversion +
             "_STJ100-1-2.exe",
@@ -1394,7 +694,7 @@ def generate_loaders(
     if radios:
         print("Creating Z3 radio...")
         try:
-            make_autoloader(
+            pseudocap.make_autoloader(
                 "Z3_" +
                 radioversion +
                 "_STJ100-1-2.exe",
@@ -1407,7 +707,7 @@ def generate_loaders(
     # Passport
     try:
         print("Creating Passport OS...")
-        make_autoloader(
+        pseudocap.make_autoloader(
             "Passport_" +
             osversion +
             "_SQW100-1-2-3.exe",
@@ -1420,7 +720,7 @@ def generate_loaders(
     if radios:
         print("Creating Passport radio...")
         try:
-            make_autoloader(
+            pseudocap.make_autoloader(
                 "Passport_" +
                 radioversion +
                 "_SQW100-1-2-3.exe",
@@ -1448,10 +748,8 @@ def move_loaders(localdir,
     :type zipdir_radio: str
     """
     for files in os.listdir(localdir):
-        if files.endswith(
-                          ".exe"
-                          ) and files.startswith(
-                          ("Q10", "Z10", "Z30", "Z3", "Passport")):
+        if files.endswith(".exe") and files.startswith(
+                ("Q10", "Z10", "Z30", "Z3", "Passport")):
             print("MOVING: " + files)
             loaderdest_os = os.path.join(loaderdir_os, files)
             loaderdest_radio = os.path.join(loaderdir_radio, files)
@@ -1468,7 +766,7 @@ def move_loaders(localdir,
                     os.remove(loaderdest_radio)
         if files.endswith(
             (".7z", ".tar.xz", ".tar.bz2", ".tar.gz", ".zip")
-            ) and files.startswith(
+        ) and files.startswith(
                 ("Q10", "Z10", "Z30", "Z3", "Passport")):
             print("MOVING: " + files)
             zipdest_os = os.path.join(zipdir_os, files)
@@ -1763,7 +1061,7 @@ def do_magic(osversion, radioversion, softwareversion,
             "\n")
         blocksize = 32 * 1024 * 1024
         if compressed:
-            verifier(
+            filehashtools.verifier(
                 zipdir_os,
                 blocksize,
                 crc32,
@@ -1777,7 +1075,7 @@ def do_magic(osversion, radioversion, softwareversion,
                 md4,
                 ripemd160)
             if radios:
-                verifier(
+                filehashtools.verifier(
                     zipdir_radio,
                     blocksize,
                     crc32,
@@ -1791,7 +1089,7 @@ def do_magic(osversion, radioversion, softwareversion,
                     md4,
                     ripemd160)
         if not deleted:
-            verifier(
+            filehashtools.verifier(
                 loaderdir_os,
                 blocksize,
                 crc32,
@@ -1805,7 +1103,7 @@ def do_magic(osversion, radioversion, softwareversion,
                 md4,
                 ripemd160)
             if radios:
-                verifier(
+                filehashtools.verifier(
                     loaderdir_radio,
                     blocksize,
                     crc32,
@@ -1851,7 +1149,7 @@ if __name__ == '__main__':
         parser.add_argument(
             "-f",
             "--folder",
-            type=file_exists,
+            type=filters.file_exists,
             dest="folder",
             help="Working folder",
             default=os.getcwd(),
@@ -1859,7 +1157,7 @@ if __name__ == '__main__':
         parser.add_argument(
             "-c",
             "--cap",
-            type=file_exists,
+            type=filters.file_exists,
             dest="cappath",
             help="Path to cap.exe",
             default=os.path.join(

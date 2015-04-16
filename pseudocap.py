@@ -222,7 +222,9 @@ def make_autoloader(filename, cap, firstfile, secondfile="", thirdfile="",
                 print("Operation failed:", e.strerror)
             try:
                 with open(firstfile, "rb") as first:
-                    print("WRITING SIGNED FILE #1...\n", firstfile)
+                    print(
+                        "WRITING SIGNED FILE #1...\n",
+                        os.path.basename(firstfile))
                     while True:
                         chunk = first.read(4096)  # 4k chunks
                         if not chunk:
@@ -232,7 +234,9 @@ def make_autoloader(filename, cap, firstfile, secondfile="", thirdfile="",
                 print("Operation failed:", e.strerror)
             if (filecount >= 2):
                 try:
-                    print("WRITING SIGNED FILE #2...\n", secondfile)
+                    print(
+                        "WRITING SIGNED FILE #2...\n",
+                        os.path.basename(secondfile))
                     with open(secondfile, "rb") as second:
                         while True:
                             chunk = second.read(4096)  # 4k chunks
@@ -243,7 +247,9 @@ def make_autoloader(filename, cap, firstfile, secondfile="", thirdfile="",
                     print("Operation failed:", e.strerror)
             if (filecount >= 3):
                 try:
-                    print("WRITING SIGNED FILE #3...\n", thirdfile)
+                    print(
+                        "WRITING SIGNED FILE #3...\n",
+                        os.path.basename(thirdfile))
                     with open(thirdfile, "rb") as third:
                         while True:
                             chunk = third.read(4096)  # 4k chunks
@@ -254,7 +260,9 @@ def make_autoloader(filename, cap, firstfile, secondfile="", thirdfile="",
                     print("Operation failed:", e.strerror)
             if (filecount >= 4):
                 try:
-                    print("WRITING SIGNED FILE #5...\n", fourthfile)
+                    print(
+                        "WRITING SIGNED FILE #5...\n",
+                        os.path.basename(fourthfile))
                     with open(fourthfile, "rb") as fourth:
                         while True:
                             chunk = fourth.read(4096)  # 4k chunks
@@ -265,7 +273,9 @@ def make_autoloader(filename, cap, firstfile, secondfile="", thirdfile="",
                     print("Operation failed:", e.strerror)
             if (filecount >= 5):
                 try:
-                    print("WRITING SIGNED FILE #5...\n", fifthfile)
+                    print(
+                        "WRITING SIGNED FILE #5...\n",
+                        os.path.basename(fifthfile))
                     with open(fifthfile, "rb") as fifth:
                         while True:
                             chunk = fifth.read(4096)  # 4k chunks
@@ -276,7 +286,9 @@ def make_autoloader(filename, cap, firstfile, secondfile="", thirdfile="",
                     print("Operation failed:", e.strerror)
             if (filecount == 6):
                 try:
-                    print("WRITING SIGNED FILE #6...\n", sixthfile)
+                    print(
+                        "WRITING SIGNED FILE #6...\n",
+                        os.path.basename(sixthfile))
                     with open(sixthfile, "rb") as sixth:
                         while True:
                             chunk = sixth.read(4096)  # 4k chunks
